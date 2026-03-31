@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Prescriptions - MindCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px 40px; }
+
+        /* Header */
+        .header { background: linear-gradient(135deg, #0f4c75, #1b6ca8); color: white; border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1  { font-size: 22px; font-weight: 700; }
+        .header p   { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        .back-btn   { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Filters */
+        .filters { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .filters select, .filters input { padding: 8px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; }
+        .filters select:focus, .filters input:focus { border-color: #1b6ca8; }
+        .filter-label { font-size: 13px; font-weight: 600; color: #374151; }
+
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+        .stat-box { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 14px; }
+        .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .stat-icon.blue   { background: #dbeafe; color: #2563eb; }
+        .stat-icon.green  { background: #d1fae5; color: #059669; }
+        .stat-icon.orange { background: #fef3c7; color: #d97706; }
+        .stat-box h4 { font-size: 22px; font-weight: 700; color: #1f2937; }
+        .stat-box p  { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+        /* Prescription Card */
+        .prescription-card {
+            background: white; border-radius: 14px; padding: 24px;
+            margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #1b6ca8; transition: all 0.2s;
+        }
+        .prescription-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .doctor-info h3 { font-size: 17px; font-weight: 700; color: #0f4c75; }
+        .doctor-info p  { font-size: 13px; color: #6b7280; margin-top: 3px; }
+        .card-date { font-size: 13px; color: #6b7280; background: #f3f4f6; padding: 4px 10px; border-radius: 20px; }
+
+        /* Medicine details */
+        .medicine-box { background: #f8faff; border: 1px solid #e0eaff; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+        .medicine-name { font-weight: 700; color: #1e40af; font-size: 15px; margin-bottom: 10px; }
+        .medicine-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .med-detail { font-size: 12px; color: #374151; }
+        .med-detail span { display: block; color: #9ca3af; font-size: 11px; margin-bottom: 2px; }
+
+        .instructions-box { background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #92400e; margin-top: 8px; }
+        .instructions-box i { margin-right: 6px; }
+
+        /* File attachment */
+        .file-attachment { display: flex; align-items: center; gap: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-top: 12px; }
+        .file-attachment i { color: #059669; font-size: 18px; }
+        .file-attachment span { font-size: 13px; color: #065f46; flex: 1; }
+        .btn-download { background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .btn-download:hover { background: #047857; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 14px; }
+        .empty-state i { font-size: 56px; color: #d1d5db; margin-bottom: 16px; display: block; }
+        .empty-state h3 { color: #374151; font-size: 18px; margin-bottom: 8px; }
+        .empty-state p  { color: #9ca3af; font-size: 14px; }
+
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: #6b7280; }
+        .loading i { font-size: 32px; animation: spin 1s linear infinite; margin-bottom: 12px; display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast */
+        .toast { position: fixed; top: 24px; right: 24px; padding: 12px 18px; border-radius: 10px; color: white; font-size: 14px; display: none; z-index: 9999; }
+        .toast.show { display: block; }
+        .toast.error { background: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1><i class="fas fa-prescription-bottle-alt"></i> My Prescriptions</h1>
+            <p>Prescriptions from your counsellors</p>
+        </div>
+        <a href="patient-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-icon blue"><i class="fas fa-file-medical"></i></div>
+            <div><h4 id="totalCount">0</h4><p>Total Prescriptions</p></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+            <div><h4 id="thisMonthCount">0</h4><p>This Month</p></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon orange"><i class="fas fa-user-md"></i></div>
+            <div><h4 id="counsellorCount">0</h4><p>Counsellors</p></div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <span class="filter-label"><i class="fas fa-filter"></i> Filter:</span>
+        <input type="text" id="searchInput" placeholder="Search medicine or counsellor...">
+        <select id="monthFilter">
+            <option value="all">All Months</option>
+            <option value="2026-01">January 2026</option>
+            <option value="2026-02">February 2026</option>
+            <option value="2026-03">March 2026</option>
+            <option value="2026-04">April 2026</option>
+            <option value="2026-05">May 2026</option>
+            <option value="2026-06">June 2026</option>
+            <option value="2026-07">July 2026</option>
+            <option value="2026-08">August 2026</option>
+            <option value="2026-09">September 2026</option>
+            <option value="2026-10">October 2026</option>
+            <option value="2026-11">November 2026</option>
+            <option value="2026-12">December 2026</option>
+        </select>
+        <button onclick="resetFilters()" style="padding: 8px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; font-size: 13px;">
+            <i class="fas fa-redo-alt"></i> Reset
+        </button>
+    </div>
+
+    <!-- Prescriptions List -->
+    <div id="prescriptionsList">
+        <div class="loading"><i class="fas fa-spinner"></i> Loading prescriptions...</div>
+    </div>
+
+</div>
+
+<script src="prescriptions.js"></script>
+</body>
+</html>

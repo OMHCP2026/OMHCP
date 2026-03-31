@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Call · Counsel+</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2f4a;
+    --accent: #2563eb;
+    --accent2: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --rec: #ef4444;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+  .topbar-left { display:flex; align-items:center; gap:12px; }
+  .logo { font-size:18px; font-weight:800; color:var(--text); }
+  .logo span { color:#7bb3ff; }
+  .call-info { display:flex; flex-direction:column; }
+  .call-info .patient-name { font-size:14px; font-weight:700; color:var(--text); }
+  .call-info .appt-id { font-size:11px; color:var(--muted); }
+  .topbar-right { display:flex; align-items:center; gap:14px; }
+
+  /* Status pill */
+  .status-pill {
+    display:flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:700;
+    background: #1e293b; color: var(--muted);
+    border: 1px solid var(--border);
+    transition: all .3s;
+  }
+  .status-pill.connecting { color:#f59e0b; border-color:#f59e0b33; background:#1c1500; }
+  .status-pill.connected  { color:var(--green); border-color:#22c55e33; background:#001a0d; }
+  .status-pill.dot { width:8px; height:8px; border-radius:50%; background:currentColor; }
+
+  .timer { font-size:13px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+
+  /* Recording badge */
+  .rec-badge {
+    display:none; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:800;
+    background:#300; color:var(--rec);
+    border: 1px solid #ef444433;
+    animation: recPulse 1.5s infinite;
+  }
+  .rec-badge.active { display:flex; }
+  @keyframes recPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .rec-dot { width:8px; height:8px; border-radius:50%; background:var(--rec); }
+
+  /* ── VIDEO AREA ── */
+  .video-area {
+    flex: 1;
+    position: relative;
+    background: #060b14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Remote video — fills the area */
+  #remoteVideo {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    background: #060b14;
+    display: block;
+  }
+
+  /* Waiting overlay */
+  .waiting-overlay {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:16px;
+    background: radial-gradient(ellipse at center, #111827 0%, #060b14 100%);
+    z-index:2;
+    transition: opacity .5s;
+  }
+  .waiting-overlay.hidden { opacity:0; pointer-events:none; }
+  .avatar-ring {
+    width:100px; height:100px; border-radius:50%;
+    background: linear-gradient(135deg, #1f4e8c, #2563eb);
+    display:flex; align-items:center; justify-content:center;
+    font-size:36px; font-weight:800; color:#fff;
+    box-shadow: 0 0 0 12px #2563eb22, 0 0 0 24px #2563eb11;
+    animation: ring 2s infinite;
+  }
+  @keyframes ring { 0%,100%{box-shadow:0 0 0 12px #2563eb22,0 0 0 24px #2563eb11} 50%{box-shadow:0 0 0 18px #2563eb33,0 0 0 36px #2563eb0a} }
+  .waiting-text { font-size:16px; font-weight:600; color:var(--muted); }
+  .waiting-dots::after { content:'...'; animation:dots 1.4s infinite; }
+  @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+
+  /* Local video PiP */
+  .local-pip {
+    position:absolute;
+    bottom:100px; right:24px;
+    width:200px; height:130px;
+    border-radius:12px;
+    overflow:hidden;
+    border:2px solid var(--border);
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+    cursor:move;
+    z-index:5;
+    transition: border-color .2s;
+  }
+  .local-pip:hover { border-color: var(--accent2); }
+  #localVideo {
+    width:100%; height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+    background:#0a0f1e;
+    display:block;
+  }
+  .pip-label {
+    position:absolute; bottom:6px; left:8px;
+    font-size:10px; font-weight:700; color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.8);
+  }
+  /* Video off overlay on pip */
+  .pip-off {
+    position:absolute; inset:0;
+    background:#111827;
+    display:none;
+    align-items:center; justify-content:center;
+    color:var(--muted); font-size:28px;
+  }
+  .pip-off.show { display:flex; }
+
+  /* ── CONTROLS BAR ── */
+  .controls {
+    display:flex; align-items:center; justify-content:center;
+    gap:14px;
+    padding:18px 24px;
+    background: var(--surface);
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+    position:relative;
+  }
+
+  .ctrl-btn {
+    width:52px; height:52px; border-radius:50%;
+    border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+    transition:all .2s;
+    position:relative;
+  }
+  .ctrl-btn:hover { transform:translateY(-2px); }
+  .ctrl-btn:active { transform:scale(.93); }
+
+  .ctrl-btn.default {
+    background: var(--surface2);
+    color: var(--text);
+    border:1px solid var(--border);
+  }
+  .ctrl-btn.default:hover { background:#243050; border-color:var(--accent2); }
+
+  .ctrl-btn.active-off {
+    background:#1e0707;
+    color:var(--red);
+    border:1px solid #ef444433;
+  }
+
+  .ctrl-btn.record-btn {
+    background:#1a0000; color:var(--rec);
+    border:1px solid #ef444422;
+  }
+  .ctrl-btn.record-btn.recording {
+    background:#300; border-color:#ef444455;
+    animation:recBtnPulse 1.5s infinite;
+  }
+  @keyframes recBtnPulse { 0%,100%{box-shadow:0 0 0 0 #ef444422} 50%{box-shadow:0 0 0 8px #ef444400} }
+
+  .ctrl-btn.end-call {
+    background:var(--red); color:#fff;
+    border:none;
+    width:60px; height:60px; font-size:20px;
+    box-shadow:0 4px 20px #ef444455;
+  }
+  .ctrl-btn.end-call:hover { background:#dc2626; }
+
+  .btn-label {
+    position:absolute; bottom:-22px; left:50%;
+    transform:translateX(-50%);
+    font-size:10px; color:var(--muted);
+    white-space:nowrap; font-weight:600;
+    pointer-events:none;
+  }
+
+  .controls-right {
+    position:absolute; right:24px;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  /* ── TOAST ── */
+  .toast-container {
+    position:fixed; bottom:110px; left:50%;
+    transform:translateX(-50%);
+    z-index:999;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    pointer-events:none;
+  }
+  .toast {
+    background:#1e2d40; border:1px solid var(--border);
+    color:var(--text); padding:9px 18px; border-radius:20px;
+    font-size:13px; font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);
+    animation:toastIn .25s ease;
+  }
+  @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── NETWORK QUALITY ── */
+  .network-indicator {
+    display:flex; align-items:flex-end; gap:2px; height:16px;
+  }
+  .net-bar { width:4px; border-radius:2px; background:var(--border); transition:background .3s; }
+  .net-bar:nth-child(1){height:5px}
+  .net-bar:nth-child(2){height:9px}
+  .net-bar:nth-child(3){height:13px}
+  .net-bar:nth-child(4){height:16px}
+  .net-bar.active { background:var(--green); }
+  .net-bar.warn   { background:#f59e0b; }
+  .net-bar.poor   { background:var(--red); }
+
+  /* ── RECORDING COUNTDOWN ── */
+  .rec-countdown {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-size:96px; font-weight:900;
+    color:#fff; z-index:20;
+    text-shadow:0 0 40px rgba(0,0,0,.8);
+    animation:countAnim .8s ease-in-out;
+    pointer-events:none;
+  }
+  @keyframes countAnim { 0%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} 50%{opacity:1} 100%{opacity:0;transform:translate(-50%,-50%) scale(.8)} }
+
+  /* ── PERMISSION ERROR ── */
+  .perm-error {
+    display:none; position:absolute; inset:0;
+    background:#0a0f1e;
+    align-items:center; justify-content:center;
+    flex-direction:column; gap:16px; z-index:20;
+    text-align:center; padding:40px;
+  }
+  .perm-error.show { display:flex; }
+  .perm-error i { font-size:52px; color:var(--red); }
+  .perm-error h2 { font-size:20px; color:var(--text); }
+  .perm-error p { color:var(--muted); max-width:400px; line-height:1.6; }
+  .perm-error button {
+    margin-top:8px; padding:11px 28px;
+    background:var(--accent); color:#fff;
+    border:none; border-radius:8px;
+    font-size:14px; font-weight:700; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">Counsel<span>+</span></div>
+    <div style="width:1px;height:28px;background:var(--border);"></div>
+    <div class="call-info">
+      <div class="patient-name" id="patientNameDisplay">Patient</div>
+      <div class="appt-id" id="apptIdDisplay">Appointment #—</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="network-indicator" id="networkIndicator" title="Network quality">
+      <div class="net-bar" id="nb1"></div>
+      <div class="net-bar" id="nb2"></div>
+      <div class="net-bar" id="nb3"></div>
+      <div class="net-bar" id="nb4"></div>
+    </div>
+    <div class="status-pill connecting" id="statusPill">
+      <div class="dot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+    <div class="rec-badge" id="recBadge">
+      <div class="rec-dot"></div> REC
+    </div>
+    <div class="timer" id="callTimer">00:00</div>
+  </div>
+</div>
+
+<!-- ── VIDEO AREA ── -->
+<div class="video-area" id="videoArea">
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <!-- Waiting for patient -->
+  <div class="waiting-overlay" id="waitingOverlay">
+    <div class="avatar-ring" id="patientAvatar">P</div>
+    <div class="waiting-text">Waiting for patient to join<span class="waiting-dots"></span></div>
+  </div>
+
+  <!-- Local PiP -->
+  <div class="local-pip" id="localPip">
+    <video id="localVideo" autoplay playsinline muted></video>
+    <div class="pip-off" id="pipOff"><i class="fas fa-video-slash"></i></div>
+    <div class="pip-label">You</div>
+  </div>
+
+  <!-- Permission error -->
+  <div class="perm-error" id="permError">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>Camera / Microphone Access Denied</h2>
+    <p>Please allow camera and microphone access in your browser settings, then refresh the page.</p>
+    <button onclick="location.reload()"><i class="fas fa-redo"></i> Retry</button>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+
+<!-- ── CONTROLS ── -->
+<div class="controls">
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn default" id="btnMic" title="Mute/Unmute">
+      <i class="fas fa-microphone" id="micIcon"></i>
+    </button>
+    <span class="btn-label">Mute</span>
+  </div>
+
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn default" id="btnVideo" title="Camera on/off">
+      <i class="fas fa-video" id="videoIcon"></i>
+    </button>
+    <span class="btn-label">Camera</span>
+  </div>
+
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn record-btn" id="btnRecord" title="Start/Stop Recording">
+      <i class="fas fa-circle" id="recIcon"></i>
+    </button>
+    <span class="btn-label" id="recLabel">Record</span>
+  </div>
+
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn end-call" id="btnEnd" title="End Call">
+      <i class="fas fa-phone-slash"></i>
+    </button>
+    <span class="btn-label" style="color:var(--red)">End</span>
+  </div>
+
+  <div class="controls-right">
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+      <button class="ctrl-btn default" id="btnFlip" title="Flip local camera">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      <span class="btn-label">Flip</span>
+    </div>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+      <button class="ctrl-btn default" id="btnFullscreen" title="Fullscreen">
+        <i class="fas fa-expand" id="fsIcon"></i>
+      </button>
+      <span class="btn-label">Fullscreen</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG — reads from URL params
+//  Usage: video-call.html?appointmentId=36&patientName=Santanu&callId=call_xxx
+// ══════════════════════════════════════════════════════
+const params       = new URLSearchParams(location.search);
+const appointmentId = params.get('appointmentId') || '0';
+const patientName   = params.get('patientName')   || 'Patient';
+const callId        = params.get('callId')         || '';
+const isCaller      = params.get('caller') === 'true'; // counsellor initiates
+
+// Set UI
+document.getElementById('patientNameDisplay').textContent = patientName;
+document.getElementById('apptIdDisplay').textContent      = 'Appointment #' + appointmentId;
+const avatar = patientName.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+document.getElementById('patientAvatar').textContent = avatar;
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let localStream      = null;
+let peerConnection   = null;
+let currentCallId    = callId;
+let isConnected      = false;
+let micOn            = true;
+let camOn            = true;
+let isRecording      = false;
+let mediaRecorder    = null;
+let recordedChunks   = [];
+let callSeconds      = 0;
+let timerInterval    = null;
+let pollInterval     = null;
+let lastSignalTime   = 0;
+let facingMode       = 'user';
+
+const SIGNAL_POLL_MS = 1500;
+
+// ICE servers (STUN — free, works on LAN too)
+const ICE_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ]
+};
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+async function init() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode }, audio:true });
+    document.getElementById('localVideo').srcObject = localStream;
+    startCallFlow();
+  } catch(e) {
+    console.error('Media error:', e);
+    document.getElementById('permError').classList.add('show');
+  }
+}
+
+async function startCallFlow() {
+  if (isCaller) {
+    // Counsellor: create offer
+    await createPeerConnection();
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    await sendSignal('offer', JSON.stringify(offer));
+    setStatus('connecting');
+    toast('📞 Calling patient…');
+    startSignalPolling();
+  } else {
+    // Patient side (or when joining an existing call)
+    setStatus('connecting');
+    startSignalPolling();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PEER CONNECTION
+// ══════════════════════════════════════════════════════
+async function createPeerConnection() {
+  peerConnection = new RTCPeerConnection(ICE_CONFIG);
+
+  // Add local tracks
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  // Remote stream → remoteVideo
+  peerConnection.ontrack = e => {
+    const rv = document.getElementById('remoteVideo');
+    if (!rv.srcObject) rv.srcObject = new MediaStream();
+    rv.srcObject.addTrack(e.track);
+    onRemoteConnected();
+  };
+
+  // ICE candidate → send to signaling
+  peerConnection.onicecandidate = e => {
+    if (e.candidate) sendSignal('ice', JSON.stringify(e.candidate));
+  };
+
+  // Connection state
+  peerConnection.onconnectionstatechange = () => {
+    const s = peerConnection.connectionState;
+    if (s === 'connected')     { onRemoteConnected(); }
+    if (s === 'disconnected' || s === 'failed') { onDisconnected(); }
+  };
+
+  // Network quality via stats
+  setInterval(checkNetworkQuality, 3000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SIGNALING — polls CallServlet
+// ══════════════════════════════════════════════════════
+function startSignalPolling() {
+  pollInterval = setInterval(pollSignals, SIGNAL_POLL_MS);
+}
+
+async function pollSignals() {
+  if (!currentCallId) return;
+  try {
+    const res  = await fetch(`/OMHCP/CallServlet?action=getSignal&callId=${encodeURIComponent(currentCallId)}&since=${lastSignalTime}`);
+    const data = await res.json();
+    if (!data.success) return;
+
+    if (data.callStatus === 'ended' || data.callStatus === 'rejected') {
+      onDisconnected(); return;
+    }
+
+    for (const sig of (data.signals || [])) {
+      lastSignalTime = Math.max(lastSignalTime, sig.timestamp);
+      await handleSignal(sig);
+    }
+  } catch(e) { /* network hiccup, ignore */ }
+}
+
+async function handleSignal(sig) {
+  switch(sig.type) {
+    case 'offer': {
+      if (!peerConnection) await createPeerConnection();
+      const offer = JSON.parse(sig.data);
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      await sendSignal('answer', JSON.stringify(answer));
+      break;
+    }
+    case 'answer': {
+      if (peerConnection && peerConnection.signalingState === 'have-local-offer') {
+        const answer = JSON.parse(sig.data);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+      break;
+    }
+    case 'ice': {
+      if (peerConnection && peerConnection.remoteDescription) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(sig.data)));
+        } catch(e) {}
+      }
+      break;
+    }
+    case 'ended':
+    case 'rejected':
+      onDisconnected();
+      break;
+  }
+}
+
+async function sendSignal(type, data) {
+  if (!currentCallId) return;
+  try {
+    await fetch('/OMHCP/CallServlet', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`action=sendSignal&callId=${encodeURIComponent(currentCallId)}&type=${type}&data=${encodeURIComponent(data)}`
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+//  CALL STATE
+// ══════════════════════════════════════════════════════
+function onRemoteConnected() {
+  if (isConnected) return;
+  isConnected = true;
+  document.getElementById('waitingOverlay').classList.add('hidden');
+  setStatus('connected');
+  startTimer();
+  toast('✅ Connected!');
+}
+
+function onDisconnected() {
+  clearInterval(pollInterval);
+  clearInterval(timerInterval);
+  setStatus('connecting');
+  if (isRecording) stopRecording();
+  toast('📴 Call ended');
+  setTimeout(() => {
+    // Return to dashboard after 2s
+    window.location.href = 'counsellor-dashboard.html';
+  }, 2000);
+}
+
+// ══════════════════════════════════════════════════════
+//  CONTROLS
+// ══════════════════════════════════════════════════════
+document.getElementById('btnMic').addEventListener('click', () => {
+  micOn = !micOn;
+  localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+  const btn = document.getElementById('btnMic');
+  const ico = document.getElementById('micIcon');
+  ico.className = micOn ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+  btn.className = micOn ? 'ctrl-btn default' : 'ctrl-btn active-off';
+  toast(micOn ? '🎤 Mic on' : '🔇 Muted');
+});
+
+document.getElementById('btnVideo').addEventListener('click', () => {
+  camOn = !camOn;
+  localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+  const btn = document.getElementById('btnVideo');
+  const ico = document.getElementById('videoIcon');
+  ico.className = camOn ? 'fas fa-video' : 'fas fa-video-slash';
+  btn.className = camOn ? 'ctrl-btn default' : 'ctrl-btn active-off';
+  document.getElementById('pipOff').classList.toggle('show', !camOn);
+  toast(camOn ? '📹 Camera on' : '📷 Camera off');
+});
+
+document.getElementById('btnRecord').addEventListener('click', () => {
+  isRecording ? stopRecording() : startRecording();
+});
+
+document.getElementById('btnEnd').addEventListener('click', async () => {
+  if (isRecording) stopRecording();
+  if (currentCallId) {
+    await fetch('/OMHCP/CallServlet', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`action=endCall&callId=${encodeURIComponent(currentCallId)}`
+    }).catch(()=>{});
+  }
+  onDisconnected();
+});
+
+document.getElementById('btnFlip').addEventListener('click', async () => {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode }, audio:true });
+    const newVideoTrack = newStream.getVideoTracks()[0];
+    // Replace in peer connection
+    if (peerConnection) {
+      const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+      if (sender) sender.replaceTrack(newVideoTrack);
+    }
+    localStream.getVideoTracks().forEach(t => t.stop());
+    localStream.removeTrack(localStream.getVideoTracks()[0]);
+    localStream.addTrack(newVideoTrack);
+    document.getElementById('localVideo').srcObject = localStream;
+    toast('🔄 Camera flipped');
+  } catch(e) { toast('⚠️ Could not flip camera'); }
+});
+
+document.getElementById('btnFullscreen').addEventListener('click', () => {
+  const area = document.getElementById('videoArea');
+  if (!document.fullscreenElement) {
+    area.requestFullscreen().catch(()=>{});
+    document.getElementById('fsIcon').className = 'fas fa-compress';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('fsIcon').className = 'fas fa-expand';
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  RECORDING
+// ══════════════════════════════════════════════════════
+function startRecording() {
+  // Combine remote + local into one canvas stream for recording
+  // Simple approach: record the combined stream (remote + local audio)
+  try {
+    const tracks = [];
+
+    // Remote video
+    const remoteVid = document.getElementById('remoteVideo');
+    if (remoteVid.srcObject) {
+      remoteVid.srcObject.getTracks().forEach(t => tracks.push(t));
+    }
+
+    // Local audio
+    if (localStream) {
+      localStream.getAudioTracks().forEach(t => tracks.push(t));
+    }
+
+    const combinedStream = tracks.length > 0
+      ? new MediaStream(tracks)
+      : localStream; // fallback: record self
+
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+      ? 'video/webm;codecs=vp9,opus'
+      : MediaRecorder.isTypeSupported('video/webm')
+      ? 'video/webm'
+      : 'video/mp4';
+
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = saveRecording;
+    mediaRecorder.start(1000); // chunk every 1s
+
+    isRecording = true;
+    document.getElementById('btnRecord').classList.add('recording');
+    document.getElementById('recIcon').className = 'fas fa-stop';
+    document.getElementById('recLabel').textContent = 'Stop Rec';
+    document.getElementById('recBadge').classList.add('active');
+    toast('🔴 Recording started');
+  } catch(e) {
+    console.error('Recording error:', e);
+    toast('⚠️ Could not start recording: ' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  document.getElementById('btnRecord').classList.remove('recording');
+  document.getElementById('recIcon').className = 'fas fa-circle';
+  document.getElementById('recLabel').textContent = 'Record';
+  document.getElementById('recBadge').classList.remove('active');
+  toast('⏹ Recording stopped — saving…');
+}
+
+function saveRecording() {
+  const blob = new Blob(recordedChunks, { type: 'video/webm' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const now  = new Date();
+  const ts   = now.toISOString().replace(/[:.]/g,'-').substring(0,19);
+  a.href     = url;
+  a.download = `session_appt${appointmentId}_${patientName.replace(/\s+/g,'_')}_${ts}.webm`;
+  a.click();
+  URL.revokeObjectURL(url);
+  recordedChunks = [];
+  toast('💾 Recording saved!');
+}
+
+// ══════════════════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════════════════
+function startTimer() {
+  callSeconds = 0;
+  timerInterval = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds/60)).padStart(2,'0');
+    const s = String(callSeconds%60).padStart(2,'0');
+    document.getElementById('callTimer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════
+//  STATUS + TOAST
+// ══════════════════════════════════════════════════════
+function setStatus(state) {
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusText');
+  pill.className = 'status-pill ' + state;
+  txt.textContent = state === 'connected' ? 'Connected' : 'Connecting…';
+}
+
+let toastTimeout;
+function toast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ══════════════════════════════════════════════════════
+//  NETWORK QUALITY
+// ══════════════════════════════════════════════════════
+async function checkNetworkQuality() {
+  if (!peerConnection) return;
+  try {
+    const stats = await peerConnection.getStats();
+    let rtt = null;
+    stats.forEach(report => {
+      if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+        rtt = report.currentRoundTripTime;
+      }
+    });
+    const bars = [document.getElementById('nb1'),document.getElementById('nb2'),
+                  document.getElementById('nb3'),document.getElementById('nb4')];
+    bars.forEach(b => b.className = 'net-bar');
+    if (rtt === null) return;
+    let level = rtt < 0.05 ? 4 : rtt < 0.15 ? 3 : rtt < 0.3 ? 2 : 1;
+    const cls  = level >= 3 ? 'active' : level === 2 ? 'warn' : 'poor';
+    for (let i = 0; i < level; i++) bars[i].classList.add(cls);
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+//  DRAGGABLE PIP
+// ══════════════════════════════════════════════════════
+(function() {
+  const pip = document.getElementById('localPip');
+  let dragging=false, ox=0, oy=0;
+  pip.addEventListener('mousedown', e => {
+    dragging=true; ox=e.clientX-pip.offsetLeft; oy=e.clientY-pip.offsetTop;
+    pip.style.cursor='grabbing';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const area = document.getElementById('videoArea').getBoundingClientRect();
+    let x = e.clientX - ox, y = e.clientY - oy;
+    x = Math.max(8, Math.min(x, area.width  - pip.offsetWidth  - 8));
+    y = Math.max(8, Math.min(y, area.height - pip.offsetHeight - 8));
+    pip.style.right='auto'; pip.style.bottom='auto';
+    pip.style.left=x+'px'; pip.style.top=y+'px';
+  });
+  document.addEventListener('mouseup', () => { dragging=false; pip.style.cursor='move'; });
+})();
+
+// ══════════════════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

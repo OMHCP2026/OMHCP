@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – MedCare</title>
+    <link rel="stylesheet" href="login.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="login-wrapper">
+
+    <!-- Left Panel -->
+    <div class="login-left">
+        <div class="brand">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <h1>MedCare</h1>
+        </div>
+        <p class="tagline">Your Health, Our Priority</p>
+        <ul class="features">
+            <li><i class="fa-solid fa-check-circle"></i> 24/7 Support Available</li>
+            <li><i class="fa-solid fa-check-circle"></i> Certified Counsellors</li>
+            <li><i class="fa-solid fa-check-circle"></i> Secure & Confidential</li>
+            <li><i class="fa-solid fa-check-circle"></i> Easy Appointment Booking</li>
+        </ul>
+        <div class="left-footer">© 2025 MedCare Healthcare</div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="login-right">
+
+        <div class="login-header">
+            <h2>Welcome Back 👋</h2>
+            <p>Sign in to continue to MedCare</p>
+        </div>
+
+        <!-- Alert Box -->
+        <div id="alertBox" class="alert" style="display:none;"></div>
+
+        <form id="loginForm" novalidate autocomplete="off">
+
+            <!-- Email -->
+            <div class="input-group" id="emailGroup">
+                <label for="email">Email Address</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" name="email"
+                           placeholder="Enter your email" autocomplete="email">
+                </div>
+                <span class="field-error" id="emailError"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="input-group" id="passwordGroup">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password"
+                           placeholder="Enter your password">
+                    <i class="fa-solid fa-eye toggle-pwd" id="togglePassword"></i>
+                </div>
+                <span class="field-error" id="passwordError"></span>
+            </div>
+
+            <!-- Remember + Forgot -->
+            <div class="remember-forgot">
+                <label class="remember-label">
+                    <input type="checkbox" id="remember" name="remember">
+                    <span>Remember me</span>
+                </label>
+                <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="role-selector">
+                <label class="role-label">Login as:</label>
+                <div class="role-options">
+                    <label class="role-card">
+                        <input type="radio" name="role" value="patient" checked>
+                        <i class="fa-solid fa-user"></i>
+                        <span>Patient</span>
+                    </label>
+                    <label class="role-card">
+                        <input type="radio" name="role" value="counsellor">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <span>Counsellor</span>
+                    </label>
+                    <label class="role-card">
+                        <input type="radio" name="role" value="admin">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Admin</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" id="loginBtn">
+                <i class="fa-solid fa-spinner fa-spin" id="btnSpinner" style="display:none;"></i>
+                <span id="btnText">Login</span>
+            </button>
+
+        </form>
+
+        <p class="register-link">
+            Don't have an account? <a href="register.html">Register here</a>
+        </p>
+
+    </div>
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

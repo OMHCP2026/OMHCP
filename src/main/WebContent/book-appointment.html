@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCare – Book Appointment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="book-appointment.css">
+    <style>
+        /* ===== CONFIRMATION MODAL ===== */
+        #confirmationModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 76, 117, 0.45);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        #confirmationModal.show {
+            display: flex;
+        }
+        .modal-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            max-width: 440px;
+            width: 92%;
+            box-shadow: 0 10px 40px rgba(15,76,117,0.2);
+            border: 1px solid #eee;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .modal-icon {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: #d4edda;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.2rem;
+        }
+        .modal-icon i {
+            font-size: 30px;
+            color: #28a745;
+        }
+        .modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #0f4c75;
+            margin-bottom: 6px;
+        }
+        .modal-sub {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        .modal-details {
+            background: #f4f7fc;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            border-left: 4px solid #0f4c75;
+            padding: 1rem 1.2rem;
+            text-align: left;
+            margin-bottom: 1.2rem;
+        }
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-row:last-child { border-bottom: none; }
+        .modal-row .lbl { color: #666; display: flex; align-items: center; gap: 7px; }
+        .modal-row .val { font-weight: 600; color: #0f4c75; }
+        .modal-id { font-size: 12px; color: #888; margin-bottom: 1.5rem; }
+        .modal-id span { color: #0f4c75; font-weight: 600; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #eee;
+            transition: all 0.3s;
+        }
+        .modal-btns .btn-close {
+            background: #fff;
+            color: #666;
+        }
+        .modal-btns .btn-close:hover { background: #f4f7fc; }
+        .modal-btns .btn-view {
+            background: #0f4c75;
+            color: #fff;
+            border-color: #0f4c75;
+        }
+        .modal-btns .btn-view:hover {
+            background: #1b5a8c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15,76,117,0.25);
+        }
+    </style>
+</head>
+<body>
+    <input type="hidden" id="contextPath" value="/OMHCP">
+
+    <div class="container">
+        <!-- TOP BAR -->
+        <header class="top-bar">
+            <a href="patient-dashboard.html" class="back-link">
+                <i class="fas fa-chevron-left"></i> Back to Dashboard
+            </a>
+            <div class="brand"><i class="fas fa-brain" style="color:#3282b8;margin-right:8px;font-size:18px;"></i>MindCare</div>
+        </header>
+
+        <!-- HERO -->
+        <div class="hero">
+            <h1>Book a <em>Session</em></h1>
+            <p>Three simple steps to connect with your mental health professional</p>
+        </div>
+
+        <!-- STEPPER -->
+        <div class="stepper">
+            <div class="stepper-item active" id="dot1">
+                <div class="stepper-circle"><span>1</span></div>
+                <div class="stepper-label">Counselor</div>
+            </div>
+            <div class="stepper-line" id="line1"></div>
+            <div class="stepper-item" id="dot2">
+                <div class="stepper-circle"><span>2</span></div>
+                <div class="stepper-label">Date &amp; Time</div>
+            </div>
+            <div class="stepper-line" id="line2"></div>
+            <div class="stepper-item" id="dot3">
+                <div class="stepper-circle"><span>3</span></div>
+                <div class="stepper-label">Confirm</div>
+            </div>
+        </div>
+
+        <!-- STEP 1 – Choose Counselor -->
+        <div class="panel active" id="step1-content">
+            <div class="panel-head">
+                <h2><i class="fas fa-user-md" style="margin-right:10px;font-size:20px;"></i>Choose Your Counselor</h2>
+                <p style="color:#666;font-size:14px;margin-top:6px;">Select a specialist that matches your needs</p>
+            </div>
+            <div class="filter-row">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchCounselor" placeholder="Search name or specialty...">
+                </div>
+                <select id="specialtyFilter">
+                    <option value="all">All Specialties</option>
+                    <option value="Clinical Psychologist">Clinical Psychologist</option>
+                    <option value="Psychiatrist">Psychiatrist</option>
+                    <option value="Counseling Psychologist">Counseling Psychologist</option>
+                    <option value="Child Psychologist">Child Psychologist</option>
+                    <option value="Trauma Specialist">Trauma Specialist</option>
+                    <option value="General Counselor">General Counselor</option>
+                </select>
+            </div>
+            <div id="counselorsList" class="counselors-grid">
+                <div class="loading-wrap">
+                    <div class="spinner"></div>
+                    <span>Loading counselors...</span>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <span></span>
+                <button class="btn btn-primary" id="nextToStep2" onclick="nextStep()" disabled>
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2 – Date & Time -->
+        <div class="panel" id="step2-content">
+            <div class="panel-head">
+                <h2><i class="fas fa-calendar-alt" style="margin-right:10px;font-size:20px;"></i>Pick Date &amp; Time</h2>
+                <p style="color:#666;font-size:14px;margin-top:6px;">Choose a slot that works best for you</p>
+            </div>
+            <div id="counselorBadge" class="selected-badge"></div>
+            <div class="dt-grid">
+                <div class="dt-col">
+                    <label class="lbl" style="font-size:14px;font-weight:500;color:#0f4c75;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+                        <i class="fas fa-calendar"></i> Select Date
+                    </label>
+                    <input type="date" id="appointmentDate" class="date-inp">
+                    <small style="color:#888;font-size:12px;margin-top:8px;display:block;">
+                        <i class="fas fa-info-circle" style="margin-right:4px;"></i>Bookable from tomorrow up to 7 days ahead
+                    </small>
+                </div>
+                <div class="dt-col">
+                    <label class="lbl" style="font-size:14px;font-weight:500;color:#0f4c75;display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+                        <i class="fas fa-clock"></i> Available Slots
+                    </label>
+                    <div id="timeSlotsContainer" class="slots-wrap">
+                        <p class="muted"><i class="fas fa-hand-pointer" style="margin-right:6px;"></i>Select a date to load slots</p>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button class="btn btn-ghost" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" id="nextToStep3" onclick="nextStep()" disabled>
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3 – Confirm -->
+        <div class="panel" id="step3-content">
+            <div class="panel-head">
+                <h2><i class="fas fa-clipboard-check" style="margin-right:10px;font-size:20px;"></i>Confirm Your Booking</h2>
+                <p style="color:#666;font-size:14px;margin-top:6px;">Review all details before confirming</p>
+            </div>
+            <div class="confirm-layout">
+                <div class="summary-card" id="summaryBox"></div>
+                <div class="reason-col">
+                    <label class="lbl" style="font-size:14px;font-weight:500;color:#0f4c75;display:flex;align-items:center;gap:6px;">
+                        <i class="fas fa-comment-dots"></i> Reason for Visit
+                    </label>
+                    <textarea id="appointmentReason" rows="4"
+                        placeholder="Describe what you'd like to discuss in this session..."></textarea>
+
+                    <div class="refund-note">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>
+                            <strong>Refund condition:</strong> Full refund only if the counselor cancels.<br>
+                            No refund for patient‑initiated cancellations.
+                            <small>रिफंड केवल काउंसलर द्वारा कैंसिल करने पर मिलेगा।</small>
+                        </span>
+                    </div>
+
+                    <label class="lbl" style="font-size:14px;font-weight:500;color:#0f4c75;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                        <i class="fas fa-credit-card"></i> Payment Method
+                    </label>
+                    <div class="payment-options">
+                        <label class="radio-label">
+                            <input type="radio" name="paymentMethod" value="fake" checked>
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">💳 Fake Payment (Demo)</span>
+                        </label>
+                        <label class="radio-label" style="margin-bottom:0;">
+                            <input type="radio" name="paymentMethod" value="offline">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">💵 Pay at Clinic</span>
+                        </label>
+                    </div>
+
+                    <label class="check-label">
+                        <input type="checkbox" id="confirmCheckbox">
+                        <span class="checkmark"></span>
+                        I confirm the above details are correct
+                    </label>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button class="btn btn-ghost" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-success" id="confirmBookingBtn" onclick="bookAppointment()" disabled>
+                    <i class="fas fa-calendar-check"></i> Confirm Booking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ✅ BOOKING CONFIRMATION MODAL -->
+    <div id="confirmationModal">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="modal-title">Booking Confirmed!</div>
+            <div class="modal-sub">Aapki appointment successfully book ho gayi hai</div>
+
+            <div class="modal-details">
+                <div class="modal-row">
+                    <span class="lbl"><i class="fas fa-user-md"></i> Counselor</span>
+                    <span class="val" id="mc-counselor">—</span>
+                </div>
+                <div class="modal-row">
+                    <span class="lbl"><i class="fas fa-stethoscope"></i> Specialty</span>
+                    <span class="val" id="mc-specialty">—</span>
+                </div>
+                <div class="modal-row">
+                    <span class="lbl"><i class="fas fa-calendar"></i> Date</span>
+                    <span class="val" id="mc-date">—</span>
+                </div>
+                <div class="modal-row">
+                    <span class="lbl"><i class="fas fa-clock"></i> Time</span>
+                    <span class="val" id="mc-time">—</span>
+                </div>
+                <div class="modal-row">
+                    <span class="lbl"><i class="fas fa-credit-card"></i> Payment</span>
+                    <span class="val" id="mc-payment">—</span>
+                </div>
+            </div>
+
+            <div class="modal-id">
+                Booking ID: <span id="mc-bookingid">—</span>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-close" onclick="closeConfirmModal()">
+                    <i class="fas fa-times" style="margin-right:6px;"></i>Close
+                </button>
+                <button class="btn-view" onclick="window.location.href='appointments.html'">
+                    <i class="fas fa-list" style="margin-right:6px;"></i>My Appointments
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="book-appointment.js"></script>
+    <script>
+        // ✅ Call this from book-appointment.js after successful booking
+        function showBookingConfirmation(data) {
+            document.getElementById('mc-counselor').textContent  = data.counselorName  || '—';
+            document.getElementById('mc-specialty').textContent  = data.specialty      || '—';
+            document.getElementById('mc-date').textContent       = data.date           || '—';
+            document.getElementById('mc-time').textContent       = data.time           || '—';
+            document.getElementById('mc-payment').textContent    = data.paymentMethod  || '—';
+            document.getElementById('mc-bookingid').textContent  = '#' + (data.bookingId || Math.floor(Math.random()*90000+10000));
+            document.getElementById('confirmationModal').classList.add('show');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmationModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

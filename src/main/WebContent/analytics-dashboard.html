@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCare - Analytics Reports</title>
+    
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fc;
+        }
+
+        .analytics-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1a237e 0%, #0d47a1 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand {
+            padding: 30px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand h2 {
+            color: white;
+            font-weight: 700;
+            font-size: 26px;
+        }
+
+        .sidebar-brand p {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-user {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .user-info h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 20px 0;
+        }
+
+        .sidebar-nav li {
+            padding: 12px 25px;
+            margin: 5px 0;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+        }
+
+        .sidebar-nav li:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #4CAF50;
+        }
+
+        .sidebar-nav li.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #4CAF50;
+        }
+
+        .sidebar-nav li a {
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-nav li a i {
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .sidebar-nav .nav-header {
+            padding: 20px 25px 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #5a67d8;
+            transform: translateX(-3px);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .kpi-header h3 {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .kpi-trend {
+            font-size: 13px;
+            color: #4CAF50;
+        }
+
+        .kpi-trend.down {
+            color: #f44336;
+        }
+
+        /* Charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .chart-header select {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Activity List */
+        .activity-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-content p {
+            margin: 0;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .activity-content small {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .activity-time {
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+        }
+
+        .error-container i {
+            font-size: 50px;
+            color: #f44336;
+            margin-bottom: 20px;
+        }
+
+        .error-container button {
+            padding: 10px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .error-container button:hover {
+            background: #5a67d8;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-brand">
+                <h2>MindCare</h2>
+                <p>ANALYTICS</p>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-info">
+                    <h4 id="adminName">Admin</h4>
+                    <p id="adminEmail">Administrator</p>
+                </div>
+            </div>
+            
+            <ul class="sidebar-nav">
+                <li class="active">
+                    <a href="#">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                
+                <li class="nav-header">COUNSELORS</li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-user-md"></i>
+                        <span>Counselors</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-users"></i>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Admins</span>
+                    </a>
+                </li>
+                
+                <li class="nav-header">APPOINTMENTS</li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>All Appointments</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-clock"></i>
+                        <span>Pending</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Completed</span>
+                    </a>
+                </li>
+                
+                <li class="nav-header">REPORTS</li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-rupee-sign"></i>
+                        <span>Earnings</span>
+                    </a>
+                </li>
+                
+                <li class="nav-header">SETTINGS</li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Profile</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="header-left">
+                    <h1>Analytics Reports</h1>
+                    <p id="currentDateTime"></p>
+                </div>
+                <div class="header-right">
+                    <a href="admin-dashboard.html" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div id="contentArea">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading analytics data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            loadAnalyticsData();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            loadUserData();
+        });
+
+        function loadUserData() {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    $('#adminName').text(user.name || 'Admin');
+                    $('#adminEmail').text(user.email || 'Administrator');
+                    $('#userAvatar').text((user.name || 'A').charAt(0).toUpperCase());
+                } catch (e) {
+                    console.log('Error parsing user data');
+                }
+            }
+        }
+
+        function loadAnalyticsData() {
+            $.ajax({
+                url: '/OMHCP/admin/analytics/realtime',
+                method: 'GET',
+                timeout: 5000,
+                success: function(response) {
+                    if (response.success) {
+                        renderAnalytics(response.data);
+                    } else {
+                        loadSampleData();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('API error:', error);
+                    loadSampleData();
+                }
+            });
+        }
+
+        function loadSampleData() {
+            const sampleData = {
+                stats: {
+                    totalRevenue: 165000,
+                    totalUsers: 1234,
+                    totalAppointments: 567,
+                    avgRating: 4.8
+                },
+                revenueData: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    values: [35000, 42000, 38000, 45000, 52000, 48000, 55000]
+                },
+                userData: {
+                    admins: 5,
+                    counsellors: 45,
+                    patients: 1184
+                },
+                activity: [
+                    { icon: 'fa-user-plus', desc: 'New patient registered', user: 'sakshi', time: '2 hours ago' },
+                    { icon: 'fa-calendar-check', desc: 'Appointment completed', user: 'kusum', time: '5 hours ago' },
+                    { icon: 'fa-star', desc: 'New rating received', user: 'neha', time: '1 day ago' },
+                    { icon: 'fa-rupee-sign', desc: 'Payment received', user: '₹1,500', time: '2 days ago' }
+                ]
+            };
+            renderAnalytics(sampleData);
+        }
+
+        function renderAnalytics(data) {
+            const stats = data.stats || {};
+            
+            let html = `
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Total Revenue</h3>
+                            <div class="kpi-icon">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value">₹${formatNumber(stats.totalRevenue || 0)}</div>
+                        <div class="kpi-trend">↑ 12.5% vs last month</div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Total Users</h3>
+                            <div class="kpi-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value">${formatNumber(stats.totalUsers || 0)}</div>
+                        <div class="kpi-trend">↑ 8.3% vs last month</div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Appointments</h3>
+                            <div class="kpi-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value">${formatNumber(stats.totalAppointments || 0)}</div>
+                        <div class="kpi-trend">↑ 15.2% vs last month</div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Avg. Rating</h3>
+                            <div class="kpi-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value">${stats.avgRating || 4.8}</div>
+                        <div class="kpi-trend">↑ 0.2 points</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Revenue Trend</h3>
+                            <select id="revenuePeriod">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>User Distribution</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="userChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-card">
+                    <div class="chart-header">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div id="activityList">
+            `;
+            
+            if (data.activity && data.activity.length > 0) {
+                data.activity.forEach(a => {
+                    html += `
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas ${a.icon}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p>${a.desc}</p>
+                                <small>${a.user}</small>
+                            </div>
+                            <div class="activity-time">${a.time}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p style="text-align: center; color: #999;">No recent activity</p>';
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            $('#contentArea').html(html);
+            
+            // Initialize charts
+            initRevenueChart(data.revenueData);
+            initUserChart(data.userData);
+            
+            // Add event listener for period change
+            $('#revenuePeriod').change(function() {
+                // In real app, fetch new data based on period
+                console.log('Period changed to:', $(this).val());
+            });
+        }
+
+        function initRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data?.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: data?.values || [35000, 42000, 38000, 45000, 52000, 48000, 55000],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '₹' + formatNumber(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initUserChart(data) {
+            const ctx = document.getElementById('userChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            data = data || { admins: 5, counsellors: 45, patients: 1184 };
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Admins', 'Counsellors', 'Patients'],
+                    datasets: [{
+                        data: [data.admins, data.counsellors, data.patients],
+                        backgroundColor: ['#f44336', '#ff9800', '#4CAF50'],
+                        borderWidth: 0,
+                        hoverOffset: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 13
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            $('#currentDateTime').text(now.toLocaleDateString('en-US', options));
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('user');
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

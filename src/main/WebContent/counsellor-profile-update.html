@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Profile | Counsellor</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f0f4fa;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px; width: 100%;
+            background: white; border-radius: 24px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #3a6cf4, #7c3aed);
+            padding: 40px 30px; color: white; position: relative;
+        }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header p  { opacity: 0.9; font-size: 15px; }
+        .avatar {
+            position: absolute; right: 30px; top: 30px;
+            width: 90px; height: 90px;
+            background: rgba(255,255,255,0.2); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 42px; font-weight: 700; color: white;
+            border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .body { padding: 30px; }
+        .section-title {
+            font-size: 18px; font-weight: 700; color: #1e293b;
+            margin: 25px 0 15px;
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 2px solid #e4eaf3; padding-bottom: 8px;
+        }
+        .section-title i { color: #3a6cf4; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .form-group { margin-bottom: 5px; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 600;
+            color: #475569; margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%; padding: 12px 15px;
+            border: 1.5px solid #e2e8f0; border-radius: 12px;
+            font-size: 15px; font-family: inherit;
+            transition: 0.2s; background: #f8fafc;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none; border-color: #3a6cf4;
+            box-shadow: 0 0 0 3px rgba(58,108,244,0.15); background: white;
+        }
+        .form-group input[readonly] { background: #e9eef3; color: #64748b; cursor: not-allowed; }
+        textarea { resize: vertical; min-height: 80px; }
+        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+        .btn {
+            padding: 14px 28px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: #3a6cf4; color: white; flex: 1; justify-content: center; }
+        .btn-primary:hover { background: #2451d6; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(58,108,244,0.3); }
+        .btn-secondary { background: white; color: #475569; border: 1.5px solid #cbd5e1; }
+        .btn-secondary:hover { background: #f1f5f9; }
+        .message { margin-top: 20px; padding: 12px 18px; border-radius: 10px; font-weight: 500; display: none; }
+        .message.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; display: block; }
+        .message.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; display: block; }
+        .loading { text-align: center; padding: 60px; font-size: 18px; color: #64748b; }
+        hr { border: none; border-top: 1px solid #e2e8f0; margin: 25px 0; }
+        @media (max-width: 700px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+            .avatar { position: static; margin: 0 auto 20px; }
+            .header { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Professional Profile</h1>
+            <p>Update your qualifications, experience and personal details</p>
+            <div class="avatar" id="avatar">?</div>
+        </div>
+        <div class="body">
+            <div id="loading" class="loading">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading your profile...
+            </div>
+            <form id="profileForm" style="display:none;">
+
+                <div class="section-title"><i class="fa-solid fa-user"></i> Basic Information</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="name" required placeholder="Dr. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Email (cannot change)</label>
+                        <input type="email" id="email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="phone" placeholder="+91 9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Registration / License No.</label>
+                        <input type="text" id="registration_number" placeholder="e.g., AIC-12345">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-briefcase"></i> Professional Details</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Specialty</label>
+                        <select id="specialty">
+                            <option value="General Counselor">General Counselor</option>
+                            <option value="Clinical Psychologist">Clinical Psychologist</option>
+                            <option value="Psychiatrist">Psychiatrist</option>
+                            <option value="Counseling Psychologist">Counseling Psychologist</option>
+                            <option value="Child Psychologist">Child Psychologist</option>
+                            <option value="Trauma Specialist">Trauma Specialist</option>
+                            <option value="Marriage & Family Therapist">Marriage & Family Therapist</option>
+                            <option value="Substance Abuse Counselor">Substance Abuse Counselor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Consultation Fee (₹)</label>
+                        <input type="number" id="fee" min="0" step="100" placeholder="e.g., 1500">
+                    </div>
+                    <div class="form-group">
+                        <label>Years of Experience</label>
+                        <input type="number" id="experience_years" min="0" max="50" placeholder="e.g., 8">
+                    </div>
+                    <div class="form-group">
+                        <label>Languages Spoken</label>
+                        <input type="text" id="languages" placeholder="e.g., English, Hindi, Marathi">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-graduation-cap"></i> Qualifications</div>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Degrees (one per line)</label>
+                        <textarea id="degrees" rows="3" placeholder="e.g., PhD in Clinical Psychology&#10;M.A. in Counseling Psychology"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Certifications</label>
+                        <textarea id="certifications" rows="3" placeholder="e.g., Certified Cognitive Behavioral Therapist (CBT)"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Professional Memberships</label>
+                        <textarea id="memberships" rows="2" placeholder="e.g., APA, Indian Psychiatric Society"></textarea>
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-pen"></i> Experience & Bio</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Previous Job / Organization</label>
+                        <input type="text" id="previous_job" placeholder="e.g., Senior Counselor at MindClinic">
+                    </div>
+                    <div class="form-group">
+                        <label>Organization / Current Workplace</label>
+                        <input type="text" id="organization" placeholder="e.g., Private Practice">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Bio / About You</label>
+                        <textarea id="bio" rows="4" placeholder="Write a short professional bio..."></textarea>
+                    </div>
+                </div>
+
+                <hr>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Save All Changes
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                            onclick="window.location.href='/OMHCP/counsellor-dashboard.html'">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+                <div id="message" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadProfile();
+        });
+
+        function loadProfile() {
+            fetch('/OMHCP/CounsellorProfileServlet')
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/OMHCP/counsellorLogin.jsp';
+                        return null;
+                    }
+                    if (!response.ok) throw new Error('HTTP error ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('profileForm').style.display = 'block';
+
+                    if (!data.success) {
+                        showMessage(data.message || 'Failed to load profile', 'error');
+                        return;
+                    }
+
+                    document.getElementById('name').value                = data.name                || '';
+                    document.getElementById('email').value               = data.email               || '';
+                    document.getElementById('phone').value               = data.phone               || '';
+                    document.getElementById('registration_number').value = data.registration_number || '';
+                    document.getElementById('specialty').value           = data.specialty            || 'General Counselor';
+                    document.getElementById('fee').value                 = data.fee                 || '';
+                    document.getElementById('experience_years').value    = data.experience_years    || '';
+                    document.getElementById('languages').value           = data.languages           || '';
+                    document.getElementById('degrees').value             = data.degrees             || '';
+                    document.getElementById('certifications').value      = data.certifications      || '';
+                    document.getElementById('memberships').value         = data.memberships         || '';
+                    document.getElementById('previous_job').value        = data.previous_job        || '';
+                    document.getElementById('organization').value        = data.organization        || '';
+                    document.getElementById('bio').value                 = data.bio                 || '';
+
+                    const avatar = document.getElementById('avatar');
+                    if (data.name) avatar.textContent = data.name.charAt(0).toUpperCase();
+                })
+                .catch(error => {
+                    console.error('Error loading profile:', error);
+                    document.getElementById('loading').innerHTML =
+                        '<i class="fa-solid fa-exclamation-triangle" style="color:red"></i> Failed to load profile. ' +
+                        '<a href="/OMHCP/counsellor-dashboard.html">Go back to dashboard</a>';
+                });
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = {
+                name:                document.getElementById('name').value.trim(),
+                phone:               document.getElementById('phone').value.trim(),
+                registration_number: document.getElementById('registration_number').value.trim(),
+                specialty:           document.getElementById('specialty').value,
+                fee:                 document.getElementById('fee').value,
+                experience_years:    document.getElementById('experience_years').value,
+                languages:           document.getElementById('languages').value.trim(),
+                degrees:             document.getElementById('degrees').value.trim(),
+                certifications:      document.getElementById('certifications').value.trim(),
+                memberships:         document.getElementById('memberships').value.trim(),
+                previous_job:        document.getElementById('previous_job').value.trim(),
+                organization:        document.getElementById('organization').value.trim(),
+                bio:                 document.getElementById('bio').value.trim()
+            };
+
+            if (!formData.name) { showMessage('Name is required.', 'error'); return; }
+
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+            messageDiv.style.display = 'block';
+
+            fetch('/OMHCP/CounsellorProfileServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(formData)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('✅ Profile updated successfully!', 'success');
+                    document.getElementById('avatar').textContent = formData.name.charAt(0).toUpperCase();
+                } else {
+                    showMessage(data.message || 'Update failed.', 'error');
+                }
+            })
+            .catch(() => showMessage('Network error. Please try again.', 'error'));
+        });
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.className = 'message ' + type;
+            msg.innerHTML = text;
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 5000);
+        }
+    </script>
+</body>
+</html>

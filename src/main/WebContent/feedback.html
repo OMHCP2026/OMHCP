@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Feedback — MindCare</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-w:250px;
+  --primary:#6366f1;
+  --primary-dk:#4f46e5;
+  --gold:#f59e0b;
+  --success:#10b981;
+  --danger:#ef4444;
+  --bg:#f0f4ff;
+  --card:#fff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --light:#f8fafc;
+  --sidebar-bg:#1e1b4b;
+  --radius:14px;
+  --shadow:0 2px 12px rgba(99,102,241,.1);
+}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  display:flex;min-height:100vh;font-size:14px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);background:var(--sidebar-bg);
+  position:fixed;top:0;left:0;bottom:0;
+  display:flex;flex-direction:column;z-index:200;
+  transition:transform .3s;
+}
+.sb-head{
+  padding:22px 18px;font-size:20px;font-weight:800;color:#fff;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-head i{color:#a5b4fc}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.sb-nav ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+.sb-nav li a{
+  display:flex;align-items:center;gap:10px;padding:10px 13px;
+  border-radius:9px;color:#a5b4fc;text-decoration:none;
+  font-size:14px;font-weight:500;transition:all .18s;
+}
+.sb-nav li a i{width:17px;text-align:center}
+.sb-nav li a:hover{background:rgba(255,255,255,.07);color:#e0e7ff}
+.sb-nav li.active a{background:rgba(99,102,241,.3);color:#c7d2fe;font-weight:700}
+.sb-foot{
+  padding:14px 10px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.logout-a{
+  display:flex;align-items:center;gap:10px;padding:10px 13px;
+  border-radius:9px;color:#f87171;text-decoration:none;
+  font-size:14px;font-weight:600;transition:background .18s;
+}
+.logout-a:hover{background:rgba(239,68,68,.13)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+.top-header{
+  height:64px;background:var(--card);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.top-header h2{font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px}
+.top-header h2 i{color:var(--primary)}
+.btn-back{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px;background:var(--primary);color:#fff;
+  border-radius:9px;text-decoration:none;font-size:13px;font-weight:700;
+  transition:background .2s;
+}
+.btn-back:hover{background:var(--primary-dk)}
+
+.content{padding:28px;flex:1}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(135deg,#6366f1,#4338ca);
+  border-radius:16px;padding:26px 30px;
+  display:flex;align-items:center;gap:18px;
+  margin-bottom:26px;
+  box-shadow:0 8px 24px rgba(99,102,241,.4);
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;right:-50px;top:-50px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.05);
+}
+.hero-icon{font-size:46px;flex-shrink:0}
+.hero h1{font-size:21px;font-weight:900;color:#fff;margin-bottom:4px}
+.hero p{font-size:13px;color:#c7d2fe}
+
+/* ── TABS ── */
+.tabs{
+  display:flex;gap:6px;background:#e8eaf6;
+  padding:5px;border-radius:11px;width:fit-content;margin-bottom:22px;
+}
+.tab{
+  padding:8px 22px;border:none;border-radius:8px;
+  font-size:14px;font-weight:600;cursor:pointer;
+  font-family:inherit;background:transparent;color:#6366f1;
+  transition:all .18s;display:flex;align-items:center;gap:7px;
+}
+.tab.active{background:#fff;color:var(--primary-dk);box-shadow:0 2px 8px rgba(99,102,241,.18)}
+
+/* ── PANEL ── */
+.panel{display:none;animation:fadeUp .22s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARD ── */
+.card{
+  background:var(--card);border-radius:16px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  padding:26px;margin-bottom:18px;
+}
+.card-head{
+  display:flex;align-items:flex-start;gap:13px;
+  padding-bottom:18px;margin-bottom:20px;
+  border-bottom:1.5px solid #f1f5f9;
+}
+.step-num{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#6366f1,#4338ca);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:16px;
+  box-shadow:0 4px 10px rgba(99,102,241,.35);
+}
+.card-head h3{font-size:16px;font-weight:800;margin-bottom:3px}
+.card-head p{font-size:13px;color:var(--muted)}
+
+/* ── COUNSELLOR GRID ── */
+.c-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;
+}
+.c-item{
+  border:2px solid var(--border);border-radius:13px;
+  padding:16px 14px;cursor:pointer;
+  background:#fafbff;text-align:center;
+  transition:all .2s;
+}
+.c-item:hover{border-color:var(--primary);background:#eef2ff;transform:translateY(-2px)}
+.c-item.selected{
+  border-color:var(--primary);background:#eef2ff;
+  box-shadow:0 0 0 3px rgba(99,102,241,.18);
+}
+.c-avatar{
+  width:56px;height:56px;border-radius:14px;margin:0 auto 10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:900;color:#fff;
+  background:linear-gradient(135deg,#a5b4fc,#6366f1);
+}
+.c-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.c-spec{font-size:11px;color:var(--primary);font-weight:600}
+.c-fee{font-size:12px;color:var(--muted);margin-top:4px}
+.c-tick{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--primary);color:#fff;
+  font-size:10px;display:none;
+  align-items:center;justify-content:center;
+  margin:8px auto 0;
+}
+.c-item.selected .c-tick{display:flex}
+
+/* ── SELECTED PREVIEW ── */
+.sel-preview{
+  display:flex;align-items:center;gap:14px;
+  background:#eef2ff;border:1.5px solid #c7d2fe;
+  border-radius:13px;padding:15px 18px;margin-bottom:22px;
+}
+.sel-av{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#818cf8,#4f46e5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;color:#fff;
+}
+.sel-name{font-size:15px;font-weight:800;color:#1e1b4b}
+.sel-spec{font-size:12px;color:#6366f1;margin-top:2px}
+
+/* ── STAR RATINGS ── */
+.rating-block{
+  border:1px solid #f1f5f9;border-radius:13px;
+  overflow:hidden;margin-bottom:22px;
+}
+.r-row{
+  display:flex;align-items:center;gap:14px;
+  padding:13px 18px;border-bottom:1px solid #f8fafc;
+  transition:background .15s;
+}
+.r-row:last-child{border-bottom:none}
+.r-row:hover{background:#fafbff}
+.r-label{
+  width:155px;flex-shrink:0;
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;
+}
+.r-label i{font-size:14px}
+.stars{display:flex;gap:5px;flex:1}
+.stars i{
+  font-size:26px;cursor:pointer;color:#e2e8f0;
+  transition:color .14s,transform .14s;
+}
+.stars i.lit   {color:var(--gold)}
+.stars i.hov   {color:#fcd34d;transform:scale(1.2)}
+.stars i:hover {transform:scale(1.2)}
+.r-text{font-size:12px;color:var(--muted);font-weight:600;width:76px;text-align:right}
+
+/* ── TAGS ── */
+.sec-label{
+  font-size:13px;font-weight:700;margin-bottom:11px;
+  display:flex;align-items:center;gap:7px;
+}
+.opt-badge{font-size:11px;color:var(--muted);background:#f1f5f9;padding:2px 8px;border-radius:8px;font-weight:500}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.tag{
+  padding:7px 14px;border:1.5px solid var(--border);
+  border-radius:20px;font-size:13px;font-weight:600;
+  cursor:pointer;background:var(--light);color:var(--muted);
+  transition:all .18s;user-select:none;
+}
+.tag:hover{border-color:var(--primary);background:#eef2ff;color:var(--primary)}
+.tag.on{border-color:var(--primary);background:var(--primary);color:#fff}
+
+/* ── TEXTAREA ── */
+textarea{
+  width:100%;padding:13px 15px;
+  border:1.5px solid var(--border);border-radius:11px;
+  font-size:14px;font-family:inherit;color:var(--text);
+  resize:vertical;outline:none;background:var(--light);line-height:1.6;
+  transition:border .2s,box-shadow .2s;
+}
+textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(99,102,241,.11);
+  background:#fff;
+}
+.char-ct{text-align:right;font-size:12px;color:var(--muted);margin-top:5px}
+
+/* ── RECOMMEND ── */
+.rec-wrap{display:flex;gap:11px;margin-bottom:22px}
+.rec-btn{
+  flex:1;padding:11px 16px;border:2px solid var(--border);
+  border-radius:11px;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;background:var(--light);
+  color:var(--muted);transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.rec-btn:hover{border-color:var(--primary);background:#eef2ff;color:var(--primary)}
+.rec-btn.yes{border-color:var(--success);background:#d1fae5;color:#065f46}
+.rec-btn.no {border-color:var(--danger); background:#fee2e2;color:#991b1b}
+
+/* ── ACTIONS ── */
+.form-actions{
+  display:flex;justify-content:flex-end;gap:11px;
+  padding-top:18px;border-top:1px solid #f1f5f9;
+}
+.btn-cancel{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 20px;border:1px solid var(--border);
+  border-radius:10px;background:var(--light);
+  color:var(--muted);font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:background .2s;
+}
+.btn-cancel:hover{background:#e2e8f0;color:var(--text)}
+.btn-submit{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 26px;
+  background:linear-gradient(135deg,#6366f1,#4338ca);
+  color:#fff;border:none;border-radius:10px;
+  font-size:14px;font-weight:700;font-family:inherit;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(99,102,241,.4);
+  transition:opacity .2s,transform .1s;
+}
+.btn-submit:hover{opacity:.9}
+.btn-submit:active{transform:scale(.97)}
+.btn-submit:disabled{opacity:.55;cursor:not-allowed}
+
+/* ── HISTORY ── */
+.h-card{
+  border:1px solid var(--border);border-radius:13px;
+  padding:18px;margin-bottom:13px;background:#fafbff;
+  transition:box-shadow .2s;
+}
+.h-card:hover{box-shadow:0 4px 16px rgba(99,102,241,.1)}
+.h-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.h-who{display:flex;align-items:center;gap:10px}
+.h-av{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,#a5b4fc,#6366f1);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;font-size:16px;
+}
+.h-name{font-size:15px;font-weight:700}
+.h-spec{font-size:11px;color:var(--primary);font-weight:600}
+.h-date{font-size:11px;color:var(--muted);margin-top:2px}
+.h-overall{font-size:16px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:4px}
+.mini-r{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.mini-b{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:#f1f5f9;color:#475569}
+.mini-b span{color:var(--gold)}
+.h-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.h-tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:#eef2ff;color:#4338ca}
+.h-comment{
+  font-size:13px;color:#475569;line-height:1.6;
+  background:#fff;border:1px solid #f1f5f9;
+  border-radius:8px;padding:10px 13px;font-style:italic;
+}
+.h-comment::before{content:'\201C';font-size:18px;color:#c7d2fe;line-height:0;vertical-align:-5px;margin-right:3px}
+.h-comment::after {content:'\201D';font-size:18px;color:#c7d2fe;line-height:0;vertical-align:-5px;margin-left:3px}
+.rec-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:700;padding:3px 10px;
+  border-radius:20px;margin-top:9px;
+}
+.rec-chip.yes{background:#d1fae5;color:#065f46}
+.rec-chip.no {background:#fee2e2;color:#991b1b}
+.sub-on{font-size:11px;color:#94a3b8;margin-top:8px}
+
+/* ── LOADING / EMPTY ── */
+.fb-loading{padding:34px;text-align:center;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:9px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .ei{font-size:46px;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* ── SUCCESS POPUP ── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(15,23,42,.55);backdrop-filter:blur(6px);
+  z-index:9000;align-items:center;justify-content:center;padding:20px;
+}
+.overlay.open{display:flex}
+.pop{
+  background:var(--card);border-radius:20px;
+  padding:38px 34px 30px;max-width:400px;width:100%;
+  text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.2);
+  animation:popIn .32s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{transform:scale(.86) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.pop-icon{margin-bottom:16px}
+@keyframes doit{to{stroke-dashoffset:0}}
+.pop h2{font-size:22px;font-weight:900;margin-bottom:8px}
+.pop p{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+.pop-stars{display:flex;justify-content:center;gap:5px;margin-bottom:22px}
+.pop-stars span{font-size:28px}
+.pop-btns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:#1e293b;color:#fff;
+  padding:12px 18px;border-radius:10px;
+  font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+  opacity:0;transform:translateY(12px);
+  transition:opacity .3s,transform .3s;
+  z-index:9999;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:#dc2626}
+.toast.ok{background:#059669}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mob-tog{display:flex!important}
+}
+@media(max-width:600px){
+  .content{padding:16px}
+  .r-row{flex-wrap:wrap;gap:8px}
+  .r-label{width:100%}
+  .r-text{width:auto}
+  .rec-wrap{flex-direction:column}
+  .form-actions{flex-direction:column}
+  .c-grid{grid-template-columns:1fr 1fr}
+}
+.mob-tog{
+  display:none;position:fixed;top:13px;left:13px;z-index:400;
+  width:36px;height:36px;background:var(--primary);color:#fff;
+  border:none;border-radius:8px;
+  align-items:center;justify-content:center;font-size:15px;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<button class="mob-tog" onclick="document.getElementById('sb').classList.toggle('open')">
+  <i class="fas fa-bars"></i>
+</button>
+
+<!-- ══════ SIDEBAR ══════ -->
+<aside class="sidebar" id="sb">
+  <div class="sb-head"><i class="fas fa-heartbeat"></i> MindCare</div>
+  <nav class="sb-nav">
+    <ul>
+      <li><a href="patient-dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="appointments.html"><i class="fas fa-calendar-check"></i> My Appointments</a></li>
+      <li><a href="book-appointment.html"><i class="fas fa-plus-circle"></i> Book Appointment</a></li>
+      <li><a href="prescriptions.html"><i class="fas fa-prescription-bottle"></i> Prescriptions</a></li>
+      <li><a href="medical-records.html"><i class="fas fa-file-medical"></i> Medical Records</a></li>
+      <li><a href="patient-messages.html"><i class="fas fa-envelope"></i> Messages</a></li>
+      <li class="active"><a href="feedback.html"><i class="fas fa-star"></i> Feedback</a></li>
+      <li><a href="profile.html"><i class="fas fa-user-circle"></i> Profile Settings</a></li>
+    </ul>
+  </nav>
+  <div class="sb-foot">
+    <a href="LogoutServlet" class="logout-a"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</aside>
+
+<!-- ══════ MAIN ══════ -->
+<main class="main">
+  <header class="top-header">
+    <h2><i class="fas fa-star"></i> Give Feedback</h2>
+    <a href="patient-dashboard.html" class="btn-back"><i class="fas fa-arrow-left"></i> Dashboard</a>
+  </header>
+
+  <div class="content">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-icon">💬</div>
+      <div>
+        <h1>Rate Your Counsellor</h1>
+        <p>Select a counsellor and share your experience — it only takes a minute!</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="t1" onclick="switchTab('give')">
+        <i class="fas fa-pen"></i> Give Feedback
+      </button>
+      <button class="tab" id="t2" onclick="switchTab('history')">
+        <i class="fas fa-history"></i> My History
+      </button>
+    </div>
+
+    <!-- ════ TAB 1: GIVE FEEDBACK ════ -->
+    <div class="panel active" id="panelGive">
+
+      <!-- Step 1: Pick Counsellor -->
+      <div class="card">
+        <div class="card-head">
+          <div class="step-num">1</div>
+          <div>
+            <h3>Select a Counsellor</h3>
+            <p>Choose the counsellor you want to rate</p>
+          </div>
+        </div>
+        <div class="c-grid" id="cGrid">
+          <div class="fb-loading"><i class="fas fa-spinner fa-spin"></i> Loading counsellors…</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Rate (hidden until counsellor selected) -->
+      <div class="card" id="step2" style="display:none">
+        <div class="card-head">
+          <div class="step-num">2</div>
+          <div>
+            <h3>Give Your Rating</h3>
+            <p>Be honest — your feedback is completely confidential</p>
+          </div>
+        </div>
+
+        <!-- Selected counsellor preview -->
+        <div class="sel-preview" id="selPreview"></div>
+
+        <!-- Star Ratings -->
+        <div class="sec-label"><i class="fas fa-star" style="color:var(--gold)"></i> Ratings <span class="opt-badge">Overall is required</span></div>
+        <div class="rating-block">
+          <div class="r-row">
+            <div class="r-label"><i class="fas fa-user-md" style="color:#6366f1"></i> Overall</div>
+            <div class="stars" id="s-overall" data-f="overall">
+              <i class="fas fa-star" data-v="1"></i><i class="fas fa-star" data-v="2"></i>
+              <i class="fas fa-star" data-v="3"></i><i class="fas fa-star" data-v="4"></i>
+              <i class="fas fa-star" data-v="5"></i>
+            </div>
+            <span class="r-text" id="rt-overall">Tap to rate</span>
+          </div>
+          <div class="r-row">
+            <div class="r-label"><i class="fas fa-comments" style="color:#06b6d4"></i> Communication</div>
+            <div class="stars" id="s-communication" data-f="communication">
+              <i class="fas fa-star" data-v="1"></i><i class="fas fa-star" data-v="2"></i>
+              <i class="fas fa-star" data-v="3"></i><i class="fas fa-star" data-v="4"></i>
+              <i class="fas fa-star" data-v="5"></i>
+            </div>
+            <span class="r-text" id="rt-communication">Tap to rate</span>
+          </div>
+          <div class="r-row">
+            <div class="r-label"><i class="fas fa-heart" style="color:#f43f5e"></i> Empathy</div>
+            <div class="stars" id="s-empathy" data-f="empathy">
+              <i class="fas fa-star" data-v="1"></i><i class="fas fa-star" data-v="2"></i>
+              <i class="fas fa-star" data-v="3"></i><i class="fas fa-star" data-v="4"></i>
+              <i class="fas fa-star" data-v="5"></i>
+            </div>
+            <span class="r-text" id="rt-empathy">Tap to rate</span>
+          </div>
+          <div class="r-row">
+            <div class="r-label"><i class="fas fa-lightbulb" style="color:#f59e0b"></i> Helpfulness</div>
+            <div class="stars" id="s-helpfulness" data-f="helpfulness">
+              <i class="fas fa-star" data-v="1"></i><i class="fas fa-star" data-v="2"></i>
+              <i class="fas fa-star" data-v="3"></i><i class="fas fa-star" data-v="4"></i>
+              <i class="fas fa-star" data-v="5"></i>
+            </div>
+            <span class="r-text" id="rt-helpfulness">Tap to rate</span>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="sec-label"><i class="fas fa-tags" style="color:#6366f1"></i> What did you appreciate? <span class="opt-badge">optional</span></div>
+        <div class="tag-wrap">
+          <span class="tag" data-t="Good Listener">👂 Good Listener</span>
+          <span class="tag" data-t="Very Helpful">💡 Very Helpful</span>
+          <span class="tag" data-t="Caring">❤️ Caring</span>
+          <span class="tag" data-t="Professional">🎓 Professional</span>
+          <span class="tag" data-t="Non-Judgmental">🤝 Non-Judgmental</span>
+          <span class="tag" data-t="Clear Explanations">📝 Clear Explanations</span>
+          <span class="tag" data-t="Punctual">⏰ Punctual</span>
+          <span class="tag" data-t="Made Me Comfortable">😊 Made Me Comfortable</span>
+        </div>
+
+        <!-- Comment -->
+        <div class="sec-label" style="margin-top:2px"><i class="fas fa-comment-dots" style="color:#6366f1"></i> Share your experience <span class="opt-badge">optional</span></div>
+        <textarea id="fbComment" rows="4" maxlength="1000"
+          placeholder="How was your session? What helped you, or what could be improved…"></textarea>
+        <div class="char-ct"><span id="charCt">0</span>/1000</div>
+
+        <!-- Recommend -->
+        <div class="sec-label" style="margin-top:18px">
+          <i class="fas fa-thumbs-up" style="color:var(--success)"></i> Would you recommend this counsellor?
+        </div>
+        <div class="rec-wrap">
+          <button class="rec-btn" id="recYes" onclick="setRec(true)"><i class="fas fa-thumbs-up"></i> Yes, definitely!</button>
+          <button class="rec-btn" id="recNo"  onclick="setRec(false)"><i class="fas fa-thumbs-down"></i> Not really</button>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="resetForm()"><i class="fas fa-times"></i> Cancel</button>
+          <button class="btn-submit" id="submitBtn" onclick="submitFeedback()">
+            <i class="fas fa-paper-plane"></i> Submit Feedback
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /panelGive -->
+
+    <!-- ════ TAB 2: HISTORY ════ -->
+    <div class="panel" id="panelHistory">
+      <div class="card">
+        <div class="card-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">
+            <i class="fas fa-history" style="font-size:15px"></i>
+          </div>
+          <div>
+            <h3>My Feedback History</h3>
+            <p>All feedback you have submitted</p>
+          </div>
+        </div>
+        <div id="historyList">
+          <div class="fb-loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ══════ SUCCESS POPUP ══════ -->
+<div class="overlay" id="successOverlay">
+  <div class="pop">
+    <div class="pop-icon">
+      <svg viewBox="0 0 52 52" width="58" height="58">
+        <circle cx="26" cy="26" r="23" fill="none" stroke="#10b981" stroke-width="2.5"
+          stroke-dasharray="145" stroke-dashoffset="145"
+          style="animation:doit .6s .1s ease forwards"/>
+        <path d="M14 27l8 8 16-16" fill="none" stroke="#10b981" stroke-width="3.5"
+          stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="46" stroke-dashoffset="46"
+          style="animation:doit .4s .65s ease forwards"/>
+        <style>@keyframes doit{to{stroke-dashoffset:0}}</style>
+      </svg>
+    </div>
+    <h2>Thank You! 🎉</h2>
+    <p>Your feedback has been submitted.<br>It helps improve mental health care.</p>
+    <div class="pop-stars" id="popStars"></div>
+    <div class="pop-btns">
+      <button class="btn-submit" onclick="closeSuccess()"><i class="fas fa-check"></i> Done</button>
+      <button class="btn-cancel" onclick="switchTab('history');closeSuccess()">
+        <i class="fas fa-history"></i> View History
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i id="toastIcon" class="fas fa-check-circle"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ══════ JAVASCRIPT ══════ -->
+<script>
+/* ── State ── */
+const S = {
+  counsellorId: null, counsellorName: '', counsellorSpec: '',
+  ratings: {overall:0, communication:0, empathy:0, helpfulness:0},
+  tags: [], recommend: null
+};
+const LABELS = ['','Poor','Fair','Good','Very Good','Excellent'];
+const COLORS  = [
+  'linear-gradient(135deg,#6366f1,#4f46e5)',
+  'linear-gradient(135deg,#0891b2,#0e7490)',
+  'linear-gradient(135deg,#059669,#047857)',
+  'linear-gradient(135deg,#d97706,#b45309)',
+  'linear-gradient(135deg,#dc2626,#b91c1c)',
+  'linear-gradient(135deg,#7c3aed,#6d28d9)',
+];
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  initStars();
+  initTags();
+  document.getElementById('fbComment').addEventListener('input', e => {
+    const n = e.target.value.length;
+    document.getElementById('charCt').textContent = n;
+    document.getElementById('charCt').style.color = n > 900 ? '#ef4444' : '#94a3b8';
+  });
+  loadCounsellors();
+});
+
+/* ── Tab Switch ── */
+function switchTab(t) {
+  document.getElementById('panelGive').classList.toggle('active', t === 'give');
+  document.getElementById('panelHistory').classList.toggle('active', t === 'history');
+  document.getElementById('t1').classList.toggle('active', t === 'give');
+  document.getElementById('t2').classList.toggle('active', t === 'history');
+  if (t === 'history') loadHistory();
+}
+
+/* ── Load All Counsellors ── */
+function loadCounsellors() {
+  const grid = document.getElementById('cGrid');
+  fetch('FeedbackServlet?action=getCounsellors')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.success || !d.counsellors.length) {
+        grid.innerHTML = `<div class="empty"><div class="ei">👨‍⚕️</div><p>No counsellors available right now.</p></div>`;
+        return;
+      }
+      grid.innerHTML = d.counsellors.map((c, i) => `
+        <div class="c-item" id="ci-${c.id}" onclick="selectCounsellor(${c.id},'${esc(c.name)}','${esc(c.specialty||'General Counselor')}')">
+          <div class="c-avatar" style="background:${COLORS[i % COLORS.length]}">${c.name.charAt(0).toUpperCase()}</div>
+          <div class="c-name">${esc(c.name)}</div>
+          <div class="c-spec">${esc(c.specialty || 'General Counselor')}</div>
+          <div class="c-fee">₹${c.fee || '1000'} / session</div>
+          <div class="c-tick"><i class="fas fa-check"></i></div>
+        </div>`).join('');
+    })
+    .catch(() => {
+      grid.innerHTML = `<div class="empty"><div class="ei">❌</div><p>Could not load counsellors. Check server.</p></div>`;
+    });
+}
+
+/* ── Select Counsellor ── */
+function selectCounsellor(id, name, spec) {
+  S.counsellorId = id;
+  S.counsellorName = name;
+  S.counsellorSpec = spec;
+
+  // Highlight
+  document.querySelectorAll('.c-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('ci-' + id)?.classList.add('selected');
+
+  // Fill preview
+  document.getElementById('selPreview').innerHTML = `
+    <div class="sel-av">${name.charAt(0).toUpperCase()}</div>
+    <div>
+      <div class="sel-name">${esc(name)}</div>
+      <div class="sel-spec"><i class="fas fa-stethoscope" style="margin-right:4px"></i>${esc(spec)}</div>
+    </div>`;
+
+  // Show step 2 with animation
+  const s2 = document.getElementById('step2');
+  s2.style.display = 'block';
+  s2.style.opacity = '0';
+  s2.style.transform = 'translateY(14px)';
+  requestAnimationFrame(() => {
+    s2.style.transition = 'opacity .28s,transform .28s';
+    s2.style.opacity = '1';
+    s2.style.transform = 'translateY(0)';
+  });
+  s2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Stars ── */
+function initStars() {
+  document.querySelectorAll('.stars').forEach(grp => {
+    const field = grp.dataset.f;
+    const stars = [...grp.querySelectorAll('i')];
+    stars.forEach((s, i) => {
+      s.addEventListener('mouseenter', () => litUp(stars, i + 1, true));
+      s.addEventListener('mouseleave', () => litUp(stars, S.ratings[field], false));
+      s.addEventListener('click', () => {
+        S.ratings[field] = i + 1;
+        litUp(stars, i + 1, false);
+        document.getElementById('rt-' + field).textContent = LABELS[i + 1];
+      });
+    });
+  });
+}
+function litUp(stars, n, hover) {
+  stars.forEach((s, i) => {
+    s.classList.remove('lit', 'hov');
+    if (i < n) s.classList.add(hover ? 'hov' : 'lit');
+  });
+}
+
+/* ── Tags ── */
+function initTags() {
+  document.querySelectorAll('.tag').forEach(t => {
+    t.addEventListener('click', () => {
+      const v = t.dataset.t;
+      t.classList.toggle('on');
+      S.tags = t.classList.contains('on') ? [...S.tags, v] : S.tags.filter(x => x !== v);
+    });
+  });
+}
+
+/* ── Recommend ── */
+function setRec(val) {
+  S.recommend = val;
+  document.getElementById('recYes').className = 'rec-btn' + (val === true  ? ' yes' : '');
+  document.getElementById('recNo').className  = 'rec-btn' + (val === false ? ' no'  : '');
+}
+
+/* ── Submit ── */
+function submitFeedback() {
+  if (!S.counsellorId)        { showToast('Please select a counsellor first.', 'err'); return; }
+  if (S.ratings.overall === 0){ showToast('Please give an Overall rating.', 'err'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+  fetch('FeedbackServlet', {
+    method: 'POST',
+    body: new URLSearchParams({
+      action:              'submitFeedback',
+      counsellorId:        S.counsellorId,
+      ratingOverall:       S.ratings.overall,
+      ratingCommunication: S.ratings.communication,
+      ratingEmpathy:       S.ratings.empathy,
+      ratingHelpfulness:   S.ratings.helpfulness,
+      tags:                S.tags.join(','),
+      comment:             document.getElementById('fbComment').value.trim(),
+      recommend:           S.recommend === null ? '' : String(S.recommend)
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Feedback';
+    if (d.success) {
+      openSuccess();
+    } else {
+      showToast(d.message || 'Submission failed.', 'err');
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Feedback';
+    showToast('Network error. Please try again.', 'err');
+  });
+}
+
+/* ── Reset Form ── */
+function resetForm() {
+  S.counsellorId = null; S.counsellorName = '';
+  S.ratings = {overall:0, communication:0, empathy:0, helpfulness:0};
+  S.tags = []; S.recommend = null;
+  document.querySelectorAll('.stars i').forEach(s => s.classList.remove('lit','hov'));
+  document.querySelectorAll('.r-text').forEach(t => t.textContent = 'Tap to rate');
+  document.querySelectorAll('.tag').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.rec-btn').forEach(b => b.className = 'rec-btn');
+  document.getElementById('fbComment').value = '';
+  document.getElementById('charCt').textContent = '0';
+  document.querySelectorAll('.c-item').forEach(e => e.classList.remove('selected'));
+  document.getElementById('step2').style.display = 'none';
+}
+
+/* ── Success Popup ── */
+function openSuccess() {
+  document.getElementById('popStars').innerHTML =
+    Array.from({length:5}, (_,i) =>
+      `<span style="color:${i < S.ratings.overall ? '#f59e0b' : '#e2e8f0'}">★</span>`
+    ).join('');
+  document.getElementById('successOverlay').classList.add('open');
+  setTimeout(resetForm, 200);
+}
+function closeSuccess() { document.getElementById('successOverlay').classList.remove('open'); }
+document.getElementById('successOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('successOverlay')) closeSuccess();
+});
+
+/* ── Load History ── */
+function loadHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '<div class="fb-loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+
+  fetch('FeedbackServlet?action=getMyFeedback')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.success || !d.feedbacks.length) {
+        list.innerHTML = `<div class="empty"><div class="ei">💬</div><p>You haven't submitted any feedback yet.</p></div>`;
+        return;
+      }
+      list.innerHTML = d.feedbacks.map(f => `
+        <div class="h-card">
+          <div class="h-top">
+            <div class="h-who">
+              <div class="h-av">${f.counsellorName.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="h-name">${esc(f.counsellorName)}</div>
+                <div class="h-spec">${esc(f.specialty || 'Counsellor')}</div>
+                <div class="h-date"><i class="fas fa-clock"></i> ${fmtDate(f.submittedAt)}</div>
+              </div>
+            </div>
+            <div class="h-overall"><i class="fas fa-star"></i>${f.ratingOverall}/5</div>
+          </div>
+          <div class="mini-r">
+            ${miniBadge('💬 Communication', f.ratingCommunication)}
+            ${miniBadge('❤️ Empathy', f.ratingEmpathy)}
+            ${miniBadge('💡 Helpfulness', f.ratingHelpfulness)}
+          </div>
+          ${f.tags ? `<div class="h-tags">${f.tags.split(',').map(t => `<span class="h-tag">${esc(t.trim())}</span>`).join('')}</div>` : ''}
+          ${f.comment ? `<div class="h-comment">${esc(f.comment)}</div>` : ''}
+          ${f.recommend ? `<span class="rec-chip ${f.recommend === 'true' ? 'yes' : 'no'}">
+            <i class="fas fa-thumbs-${f.recommend === 'true' ? 'up' : 'down'}"></i>
+            ${f.recommend === 'true' ? 'Recommended' : 'Did Not Recommend'}
+          </span>` : ''}
+        </div>`).join('');
+    })
+    .catch(() => { list.innerHTML = '<div class="fb-loading">Could not load history.</div>'; });
+}
+function miniBadge(label, val) {
+  return `<span class="mini-b">${label}: <span>${val > 0 ? '★'.repeat(Math.min(val, 5)) : '—'}</span></span>`;
+}
+
+/* ── Toast ── */
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').className = `fas fa-${type === 'err' ? 'exclamation-circle' : 'check-circle'}`;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3400);
+}
+
+/* ── Helpers ── */
+function fmtDate(s) {
+  if (!s) return '—';
+  try { return new Date(s).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}); }
+  catch { return s; }
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    height: 100vh;
+    background: linear-gradient(135deg, #0f4c75, #3282b8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Main Container */
+.register-wrapper {
+    width: 950px;
+    height: 550px;
+    display: flex;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+/* Left Section */
+.register-left {
+    width: 50%;
+    background: #0f4c75;
+    color: white;
+    padding: 50px;
+}
+
+.register-left h1 {
+    font-size: 30px;
+    margin-bottom: 15px;
+}
+
+.register-left p {
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.register-left ul {
+    list-style: none;
+}
+
+.register-left li {
+    margin: 15px 0;
+    font-size: 15px;
+}
+
+.register-left i {
+    margin-right: 10px;
+    color: #00ffcc;
+}
+
+/* Right Section */
+.register-right {
+    width: 50%;
+    background: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.register-right h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Input Fields */
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;        /* lighter gray border (was #ccc) */
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.input-group i {
+    margin-right: 10px;
+    color: #9ca3af;                    /* gray icon (was #3282b8) */
+}
+
+.input-group input,
+.input-group select {
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+/* Button */
+button {
+    padding: 12px;
+    background: #3282b8;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0f4c75;
+}
+
+/* Login link */
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #3282b8;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media(max-width: 900px) {
+    .register-wrapper {
+        flex-direction: column;
+        width: 95%;
+        height: auto;
+    }
+
+    .register-left, .register-right {
+        width: 100%;
+    }
+}

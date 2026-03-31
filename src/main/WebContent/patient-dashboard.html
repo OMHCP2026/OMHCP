@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - MindCare</title>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="patient-dashboard.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Success</span>
+</div>
+
+<div class="dashboard-container">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-heartbeat"></i> MindCare
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="active"><a href="patient-dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="appointments.html"><i class="fas fa-calendar-check"></i> My Appointments</a></li>
+                <li><a href="book-appointment.html"><i class="fas fa-plus-circle"></i> Book Appointment</a></li>
+                <li><a href="prescriptions.html"><i class="fas fa-prescription-bottle"></i> Prescriptions</a></li>
+                <li><a href="medical-records.html"><i class="fas fa-file-medical"></i> Medical Records</a></li>
+                <li><a href="patient-messages.html"><i class="fas fa-envelope"></i> Messages</a></li>
+                <li><a href="profile.html"><i class="fas fa-user-circle"></i> Profile Settings</a></li>
+                <li><a href="feedback.html"><i class="fas fa-star"></i> Feedback</a></li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="LogoutServlet" class="logout-btn" onclick="return handleLogout(event)">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="main-content" id="mainContent">
+
+        <header class="top-header">
+            <h2><i class="fas fa-user-circle"></i> Patient Dashboard</h2>
+            <a href="book-appointment.html" class="btn-primary">
+                <i class="fas fa-calendar-plus"></i> Book Appointment
+            </a>
+        </header>
+
+        <div class="content-area">
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <h1>Welcome Back, <span id="patientName">Loading...</span>! 👋</h1>
+                <p>Your mental wellness journey continues here</p>
+                <div class="emergency-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>24/7 Crisis Support: <strong>988</strong> (Suicide & Crisis Lifeline)</span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-details">
+                        <h3>Total Sessions</h3>
+                        <h2 id="totalAppointments">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-details">
+                        <h3>Upcoming</h3>
+                        <h2 id="upcomingAppointments">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-details">
+                        <h3>Completed</h3>
+                        <h2 id="completedAppointments">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-details">
+                        <h3>Prescriptions</h3>
+                        <h2 id="totalPrescriptions">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions-section">
+                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                <div class="action-buttons">
+                    <a href="book-appointment.html" class="action-btn">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Book Session</span>
+                    </a>
+                    <a href="prescriptions.html" class="action-btn">
+                        <i class="fas fa-file-prescription"></i>
+                        <span>Prescriptions</span>
+                    </a>
+                    <a href="medical-records.html" class="action-btn">
+                        <i class="fas fa-notes-medical"></i>
+                        <span>Records</span>
+                    </a>
+                    <a href="messages.html" class="action-btn">
+                        <i class="fas fa-comment-medical"></i>
+                        <span>Messages</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upcoming Appointments -->
+            <div class="appointments-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Upcoming Sessions</h3>
+                    <a href="appointments.html" class="view-all-link">
+                        View All <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div id="appointmentsList" class="appointments-list">
+                    <div class="loading">Loading your sessions...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     INCOMING CALL OVERLAY
+     ══════════════════════════════════════════════════════ -->
+<div id="incomingCallOverlay" style="
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.8);
+    z-index:99999;
+    align-items:center; justify-content:center;
+">
+  <div style="
+    background:#111827;
+    border:1px solid #1f2f4a;
+    border-radius:24px;
+    padding:40px 48px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);
+    min-width:300px;
+    animation: incomingPop .3s cubic-bezier(.4,0,.2,1);
+  ">
+    <!-- Pulsing avatar -->
+    <div id="incomingAvatar" style="
+      width:80px; height:80px; border-radius:50%;
+      background:linear-gradient(135deg,#1f4e8c,#2563eb);
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:800; color:#fff;
+      margin:0 auto 16px;
+      animation: incomingRing 1.5s infinite;
+    ">C</div>
+
+    <div id="incomingCallerName" style="
+      font-size:20px; font-weight:800; color:#f1f5f9; margin-bottom:6px;
+    ">Counsellor</div>
+
+    <div id="incomingCallType" style="
+      font-size:13px; color:#64748b; margin-bottom:28px;
+    ">📹 Incoming Video Call</div>
+
+    <!-- Accept / Decline buttons -->
+    <div style="display:flex; gap:32px; justify-content:center; align-items:center;">
+
+      <!-- Decline -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <button onclick="declineIncomingCall()" style="
+          width:64px; height:64px; border-radius:50%;
+          background:#ef4444; color:#fff;
+          border:none; font-size:24px; cursor:pointer;
+          box-shadow:0 4px 20px rgba(239,68,68,.45);
+          transition:transform .15s, background .15s;
+        "
+        onmouseover="this.style.background='#dc2626';this.style.transform='scale(1.08)'"
+        onmouseout="this.style.background='#ef4444';this.style.transform='scale(1)'">
+          <i class="fas fa-phone-slash"></i>
+        </button>
+        <span style="font-size:11px;color:#64748b;font-weight:600;">Decline</span>
+      </div>
+
+      <!-- Accept -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <button onclick="acceptIncomingCall()" style="
+          width:64px; height:64px; border-radius:50%;
+          background:#22c55e; color:#fff;
+          border:none; font-size:24px; cursor:pointer;
+          box-shadow:0 4px 20px rgba(34,197,94,.45);
+          animation: acceptGlow 1s infinite;
+          transition:transform .15s, background .15s;
+        "
+        onmouseover="this.style.background='#16a34a';this.style.transform='scale(1.08)'"
+        onmouseout="this.style.background='#22c55e';this.style.transform='scale(1)'">
+          <i class="fas fa-phone"></i>
+        </button>
+        <span style="font-size:11px;color:#22c55e;font-weight:700;">Accept</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes incomingPop  { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+@keyframes incomingRing { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.5)} 70%{box-shadow:0 0 0 20px rgba(37,99,235,0)} }
+@keyframes acceptGlow   { 0%,100%{box-shadow:0 4px 20px rgba(34,197,94,.45)} 50%{box-shadow:0 4px 32px rgba(34,197,94,.9)} }
+</style>
+
+<!-- External JavaScript -->
+<script src="patient-dashboard.js"></script>
+
+<!-- ══════════════════════════════════════════════════════
+     INCOMING CALL LOGIC
+     ══════════════════════════════════════════════════════ -->
+<script>
+let _incomingCallId     = null;
+let _incomingCallerName = '';
+let _incomingCallType   = 'video';
+
+// Poll every 3 seconds for incoming calls
+setInterval(checkForIncomingCall, 3000);
+
+async function checkForIncomingCall() {
+    // Don't check if overlay is already showing
+    if (document.getElementById('incomingCallOverlay').style.display === 'flex') return;
+
+    try {
+        const res  = await fetch('/OMHCP/CallServlet?action=checkIncomingCall');
+        const data = await res.json();
+
+        if (data.success && data.hasIncoming) {
+            _incomingCallId     = data.callId;
+            _incomingCallerName = data.callerName || 'Counsellor';
+            _incomingCallType   = data.callType   || 'video';
+            showIncomingCallUI();
+        }
+    } catch(e) {
+        // Silent fail — network hiccup
+    }
+}
+
+function showIncomingCallUI() {
+    const avatar = _incomingCallerName
+        .split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    document.getElementById('incomingAvatar').textContent     = avatar;
+    document.getElementById('incomingCallerName').textContent = _incomingCallerName;
+    document.getElementById('incomingCallType').textContent   =
+        _incomingCallType === 'video' ? '📹 Incoming Video Call' : '📞 Incoming Audio Call';
+
+    document.getElementById('incomingCallOverlay').style.display = 'flex';
+}
+
+function acceptIncomingCall() {
+    document.getElementById('incomingCallOverlay').style.display = 'none';
+
+    const url = `video-call-patient.html`
+              + `?counsellorName=${encodeURIComponent(_incomingCallerName)}`
+              + `&callId=${encodeURIComponent(_incomingCallId)}`
+              + `&appointmentId=0`;
+
+    window.open(url, '_blank', 'width=1100,height=700,menubar=no,toolbar=no,location=no');
+    _incomingCallId = null;
+}
+
+function declineIncomingCall() {
+    document.getElementById('incomingCallOverlay').style.display = 'none';
+
+    if (_incomingCallId) {
+        fetch('/OMHCP/CallServlet', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body   : `action=rejectCall&callId=${encodeURIComponent(_incomingCallId)}`
+        }).catch(() => {});
+    }
+    _incomingCallId = null;
+}
+</script>
+
+</body>
+</html>

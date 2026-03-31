@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical Records - MedCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f4f7fc; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #0f4c75; margin-bottom: 30px; }
+        .back-btn { margin-bottom: 20px; display: inline-block; color: #0f4c75; text-decoration: none; }
+        .record-item { display: flex; align-items: center; padding: 15px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; transition: all 0.3s; }
+        .record-item:hover { background: #f8f9fa; border-color: #0f4c75; }
+        .record-icon { width: 50px; height: 50px; background: #e3f2fd; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 20px; }
+        .record-icon i { font-size: 24px; color: #0f4c75; }
+        .record-info { flex: 1; }
+        .record-title { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+        .record-date { color: #666; font-size: 13px; }
+        .record-size { color: #999; font-size: 12px; margin-left: 20px; }
+        .btn-view { background: none; border: 1px solid #0f4c75; color: #0f4c75; padding: 5px 15px; border-radius: 5px; cursor: pointer; }
+        .btn-view:hover { background: #0f4c75; color: white; }
+        .upload-section { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center; }
+        .btn-upload { background: #28a745; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="patient-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        <h1><i class="fas fa-file-medical"></i> Medical Records</h1>
+        
+        <div id="recordsList">
+            <!-- Dynamic content -->
+        </div>
+        
+        <div class="upload-section">
+            <h3><i class="fas fa-cloud-upload-alt"></i> Upload New Record</h3>
+            <input type="file" id="fileUpload" style="margin: 15px 0;">
+            <button class="btn-upload" onclick="uploadFile()"><i class="fas fa-upload"></i> Upload</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMedicalRecords();
+        });
+        
+        function loadMedicalRecords() {
+            const records = [
+                { id: 1, name: 'Blood Test Report', date: '2024-03-10', type: 'PDF', size: '2.3 MB' },
+                { id: 2, name: 'X-Ray Chest', date: '2024-03-05', type: 'Image', size: '5.1 MB' },
+                { id: 3, name: 'Prescription - March 2024', date: '2024-03-01', type: 'PDF', size: '1.2 MB' },
+                { id: 4, name: 'Vaccination Record', date: '2024-02-15', type: 'PDF', size: '0.8 MB' }
+            ];
+            
+            displayRecords(records);
+        }
+        
+        function displayRecords(records) {
+            const container = document.getElementById('recordsList');
+            let html = '';
+            
+            records.forEach(record => {
+                html += `
+                    <div class="record-item">
+                        <div class="record-icon">
+                            <i class="fas fa-file-${record.type === 'PDF' ? 'pdf' : 'image'}"></i>
+                        </div>
+                        <div class="record-info">
+                            <div class="record-title">${record.name}</div>
+                            <div class="record-date">${record.date}</div>
+                        </div>
+                        <div class="record-size">${record.size}</div>
+                        <button class="btn-view" onclick="viewRecord(${record.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function viewRecord(id) {
+            alert('Viewing record #' + id);
+        }
+        
+        function uploadFile() {
+            const file = document.getElementById('fileUpload').files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            alert('Uploading: ' + file.name);
+        }
+    </script>
+</body>
+</html>

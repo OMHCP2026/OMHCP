@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counsellor Dashboard · Online Health Counselling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="counsellor-dashboard.css">
+    <style>
+        /* ── Logout Modal ── */
+        .logout-modal { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center; }
+        .logout-modal.active { display:flex; }
+        .logout-modal-content { background:#fff;border-radius:12px;padding:32px;text-align:center;max-width:360px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.2); }
+        .logout-modal-content i  { font-size:48px;color:#e74c3c;margin-bottom:16px; }
+        .logout-modal-content h3 { margin:0 0 8px;font-size:20px;color:#1f2937; }
+        .logout-modal-content p  { color:#6b7280;margin-bottom:24px; }
+        .logout-modal-actions    { display:flex;gap:12px;justify-content:center; }
+        .btn-cancel-logout  { padding:10px 24px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;font-weight:500;font-size:14px; }
+        .btn-confirm-logout { padding:10px 24px;border-radius:8px;border:none;background:#e74c3c;color:#fff;cursor:pointer;font-weight:500;font-size:14px; }
+        .btn-cancel-logout:hover  { background:#f3f4f6; }
+        .btn-confirm-logout:hover { background:#c0392b; }
+
+        /* ── Top bar ── */
+        .top-bar-user   { display:flex;align-items:center;gap:10px; }
+        .top-bar-avatar { width:36px;height:36px;border-radius:50%;background:#1f4e8c;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px; }
+        .top-bar-name   { font-weight:600;font-size:14px;color:#1f2937; }
+        .logout-icon-btn { cursor:pointer;color:#e74c3c;font-size:18px;padding:6px;border-radius:6px;transition:background .2s; }
+        .logout-icon-btn:hover { background:#fef2f2; }
+
+        /* ── Quick Actions ── */
+        .quick-actions { display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap; }
+        .qa-card { flex:1;min-width:160px;border-radius:14px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;color:#fff;transition:transform .2s,box-shadow .2s;text-decoration:none; }
+        .qa-card:hover  { transform:translateY(-3px); }
+        .qa-card.green  { background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 18px rgba(34,197,94,.25); }
+        .qa-card.blue   { background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 4px 18px rgba(59,130,246,.25); }
+        .qa-card.purple { background:linear-gradient(135deg,#a855f7,#7c3aed);box-shadow:0 4px 18px rgba(168,85,247,.25); }
+        .qa-card i         { font-size:1.8rem;opacity:.9; }
+        .qa-card .qa-title { font-weight:700;font-size:.92rem; }
+        .qa-card .qa-sub   { font-size:.75rem;opacity:.75;margin-top:2px; }
+
+        /* ── Prescription button ── */
+        .btn-upload-presc { background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:opacity .2s,transform .2s; }
+        .btn-upload-presc:hover { opacity:.88;transform:translateY(-1px); }
+
+        /* ════════════════════════════════════════
+           RATING SECTION
+        ════════════════════════════════════════ */
+        .rating-section { margin: 0 0 25px; }
+        .rating-heading {
+            font-size: 1.1rem; font-weight: 700; color: #153653;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .rating-heading i { color: #f59e0b; }
+
+        .rating-main-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #e5eff9;
+            box-shadow: 0 5px 15px rgba(0,0,0,.04);
+            padding: 24px 26px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .score-circle {
+            width: 90px; height: 90px; flex-shrink: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1f4e8c, #2d6bb8);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(31,78,140,.35);
+        }
+        .score-circle .sc-num { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; }
+        .score-circle .sc-max { font-size: 11px; color: #93c5fd; font-weight: 600; }
+
+        .score-meta { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+        .big-stars { font-size: 22px; color: #f59e0b; letter-spacing: 2px; }
+        .review-count { font-size: 13px; color: #607d9e; font-weight: 500; }
+        .rec-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #d1fae5; color: #065f46;
+            font-size: 12px; font-weight: 700;
+            padding: 3px 11px; border-radius: 20px;
+            width: fit-content;
+        }
+
+        .star-breakdown { flex: 1; min-width: 160px; }
+        .bk-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+        .bk-row:last-child { margin-bottom: 0; }
+        .bk-lbl { font-size: 12px; font-weight: 600; color: #607d9e; width: 28px; flex-shrink: 0; }
+        .bk-track { flex: 1; height: 10px; background: #eaf1fa; border-radius: 6px; overflow: hidden; }
+        .bk-fill { height: 100%; border-radius: 6px; width: 0; transition: width .9s cubic-bezier(.4,0,.2,1); }
+        .bk-fill.c5 { background: #f59e0b; }
+        .bk-fill.c4 { background: #fcd34d; }
+        .bk-fill.c3 { background: #fb923c; }
+        .bk-fill.c2 { background: #f97316; }
+        .bk-fill.c1 { background: #ef4444; }
+        .bk-cnt { font-size: 12px; font-weight: 700; color: #1d3a58; width: 18px; text-align: right; flex-shrink: 0; }
+
+        .sub-ratings { display: flex; flex-direction: column; gap: 13px; min-width: 170px; }
+        .sub-row { display: flex; align-items: center; gap: 10px; }
+        .sub-icon { font-size: 17px; flex-shrink: 0; width: 22px; text-align: center; }
+        .sub-info { flex: 1; }
+        .sub-label { font-size: 11px; font-weight: 600; color: #607d9e; display: block; margin-bottom: 4px; }
+        .sub-track { height: 7px; background: #eaf1fa; border-radius: 5px; overflow: hidden; }
+        .sub-bar { height: 100%; background: linear-gradient(90deg,#1f4e8c,#3b82f6); border-radius: 5px; width: 0; transition: width .9s cubic-bezier(.4,0,.2,1); }
+        .sub-val { font-size: 15px; font-weight: 800; color: #153653; width: 28px; text-align: right; flex-shrink: 0; }
+
+        .reviews-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #e5eff9;
+            box-shadow: 0 5px 15px rgba(0,0,0,.04);
+            overflow: hidden;
+        }
+        .reviews-card-head {
+            padding: 15px 22px;
+            border-bottom: 1px solid #eaf1fa;
+            font-size: 14px; font-weight: 700; color: #153653;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .reviews-card-head i { color: #2263b3; }
+
+        .rv-item {
+            padding: 16px 22px;
+            border-bottom: 1px solid #f3f8fe;
+            transition: background .15s;
+        }
+        .rv-item:last-child { border-bottom: none; }
+        .rv-item:hover { background: #f9fbfe; }
+
+        .rv-top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 8px;
+            flex-wrap: wrap; gap: 6px;
+        }
+        .rv-name { font-size: 14px; font-weight: 700; color: #1d3a58; }
+        .rv-date { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+        .rv-stars { font-size: 16px; color: #f59e0b; letter-spacing: 2px; }
+
+        .rv-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+        .rv-tag {
+            font-size: 11px; font-weight: 600;
+            padding: 3px 10px; border-radius: 20px;
+            background: #e2efff; color: #1f4e8c;
+        }
+        .rv-comment {
+            font-size: 13px; color: #4b5563; line-height: 1.6;
+            font-style: italic;
+            background: #f3f8fe;
+            border-left: 3px solid #2263b3;
+            padding: 10px 13px; border-radius: 0 8px 8px 0;
+        }
+        .rv-rec {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px; margin-top: 8px;
+        }
+        .rv-rec.yes { background: #d1fae5; color: #065f46; }
+        .rv-rec.no  { background: #fee2e2; color: #991b1b; }
+
+        .rv-loading { padding: 28px; text-align: center; color: #9ca3af; font-size: 14px; }
+        .rv-empty   { padding: 36px 20px; text-align: center; color: #9ca3af; }
+        .rv-empty-icon { font-size: 38px; margin-bottom: 10px; }
+
+        /* ── Status Change Buttons ── */
+        .status-btns { display:flex; gap:5px; margin-top:6px; flex-wrap:wrap; }
+        .btn-complete {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:4px 10px; border:none; border-radius:6px;
+            background:#d1fae5; color:#065f46;
+            font-size:11px; font-weight:700; cursor:pointer;
+            transition:background .2s, transform .1s; font-family:inherit;
+        }
+        .btn-complete:hover { background:#a7f3d0; transform:translateY(-1px); }
+        .btn-cancel-appt {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:4px 10px; border:none; border-radius:6px;
+            background:#fee2e2; color:#991b1b;
+            font-size:11px; font-weight:700; cursor:pointer;
+            transition:background .2s, transform .1s; font-family:inherit;
+        }
+        .btn-cancel-appt:hover { background:#fecaca; transform:translateY(-1px); }
+    </style>
+</head>
+<body>
+
+    <!-- ════════ SIDEBAR ════════ -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-hand-holding-heart"></i> Counsel<span style="color:#7bb3ff;">+</span></h2>
+            <p>Online Health Counselling</p>
+        </div>
+        <div class="counsellor-profile" id="counsellorProfile">
+            <div class="counsellor-avatar" id="counsellorAvatar">DR</div>
+            <div class="text">
+                <div class="name" id="counsellorName">Loading...</div>
+                <div class="role" id="counsellorRole">Loading...</div>
+            </div>
+        </div>
+        <div class="nav">
+            <!-- ✅ FIX: All hrefs use absolute /OMHCP/ paths so navigation works correctly -->
+            <a href="/OMHCP/counsellor-dashboard.html" class="nav-item active">
+                <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+            </a>
+            <a href="/OMHCP/appointments.html" class="nav-item">
+                <i class="fas fa-calendar-check"></i> <span>My Appointments</span>
+            </a>
+            <a href="/OMHCP/patients.html" class="nav-item">
+                <i class="fas fa-user-friends"></i> <span>My Patients</span>
+            </a>
+            <a href="/OMHCP/counsellor-messages.html" class="nav-item">
+                <i class="fas fa-comment-dots"></i> <span>Messages</span>
+                <span class="badge">3</span>
+            </a>
+            <a href="/OMHCP/prescription-upload.html" class="nav-item">
+                <i class="fas fa-prescription-bottle-alt"></i> <span>Prescriptions</span>
+            </a>
+            <a href="/OMHCP/feedback.html" class="nav-item">
+                <i class="fas fa-star"></i> <span>Feedback Received</span>
+            </a>
+            <a href="/OMHCP/counsellor-profile-update.html" class="nav-item">
+                <i class="fas fa-user-cog"></i> <span>Profile Settings</span>
+            </a>
+            <a href="/OMHCP/settings.html" class="nav-item">
+                <i class="fas fa-cog"></i> <span>Settings</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <i class="fas fa-shield-alt"></i> Secure · HIPAA Compliant
+        </div>
+    </div>
+
+    <!-- ════════ MAIN ════════ -->
+    <div class="main">
+        <div class="top-bar">
+            <div class="page-title">
+                <h1>My Dashboard</h1>
+                <div class="date"><i class="far fa-calendar-alt"></i> <span id="currentDate"></span></div>
+            </div>
+            <div class="top-bar-user">
+                <div class="top-bar-avatar" id="topBarAvatar">DR</div>
+                <span class="top-bar-name" id="topBarName">Loading...</span>
+                <i class="fas fa-sign-out-alt logout-icon-btn" id="logoutBtn" title="Logout"></i>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <!-- ✅ FIX: Quick action hrefs also use absolute /OMHCP/ paths -->
+        <div class="quick-actions">
+            <a href="/OMHCP/prescription-upload.html" class="qa-card green">
+                <i class="fas fa-prescription-bottle-alt"></i>
+                <div><div class="qa-title">Upload Prescription</div><div class="qa-sub">Send to patient</div></div>
+            </a>
+            <a href="/OMHCP/counsellor-messages.html" class="qa-card blue">
+                <i class="fas fa-comment-dots"></i>
+                <div><div class="qa-title">Chat / Messages</div><div class="qa-sub">View conversations</div></div>
+            </a>
+            <a href="/OMHCP/counsellor-profile-update.html" class="qa-card purple">
+                <i class="fas fa-user-cog"></i>
+                <div><div class="qa-title">Profile Settings</div><div class="qa-sub">Manage account</div></div>
+            </a>
+        </div>
+
+        <!-- View Tabs -->
+        <div class="view-tabs">
+            <button class="tab-btn active" id="counsellorTab">👥 My Appointments</button>
+            <button class="tab-btn" id="doctorTab">🗂️ All Appointments</button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">Total</button>
+            <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+            <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-left"><h3>TOTAL APPOINTMENTS</h3><div class="number" id="totalCount">0</div></div>
+                <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-left"><h3>TODAY'S</h3><div class="number" id="todayCount">0</div></div>
+                <div class="stat-icon"><i class="fas fa-sun"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-left"><h3>UPCOMING</h3><div class="number" id="upcomingCount">0</div></div>
+                <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-left"><h3>COMPLETED</h3><div class="number" id="completedCount">0</div></div>
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+        </div>
+
+        <!-- ⭐ RATING SECTION -->
+        <div class="rating-section">
+            <div class="rating-heading">
+                <i class="fas fa-star"></i> Patient Ratings & Feedback
+            </div>
+
+            <div class="rating-main-card">
+                <div class="score-circle">
+                    <span class="sc-num" id="scoreNum">—</span>
+                    <span class="sc-max">/5</span>
+                </div>
+
+                <div class="score-meta">
+                    <div class="big-stars" id="bigStars">☆☆☆☆☆</div>
+                    <div class="review-count" id="reviewCount">Loading…</div>
+                    <div class="rec-badge" id="recBadge" style="display:none">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span id="recText"></span>
+                    </div>
+                </div>
+
+                <div class="star-breakdown">
+                    <div class="bk-row"><span class="bk-lbl">5★</span><div class="bk-track"><div class="bk-fill c5" id="bar5"></div></div><span class="bk-cnt" id="cnt5">0</span></div>
+                    <div class="bk-row"><span class="bk-lbl">4★</span><div class="bk-track"><div class="bk-fill c4" id="bar4"></div></div><span class="bk-cnt" id="cnt4">0</span></div>
+                    <div class="bk-row"><span class="bk-lbl">3★</span><div class="bk-track"><div class="bk-fill c3" id="bar3"></div></div><span class="bk-cnt" id="cnt3">0</span></div>
+                    <div class="bk-row"><span class="bk-lbl">2★</span><div class="bk-track"><div class="bk-fill c2" id="bar2"></div></div><span class="bk-cnt" id="cnt2">0</span></div>
+                    <div class="bk-row"><span class="bk-lbl">1★</span><div class="bk-track"><div class="bk-fill c1" id="bar1"></div></div><span class="bk-cnt" id="cnt1">0</span></div>
+                </div>
+
+                <div class="sub-ratings">
+                    <div class="sub-row">
+                        <span class="sub-icon">💬</span>
+                        <div class="sub-info">
+                            <span class="sub-label">Communication</span>
+                            <div class="sub-track"><div class="sub-bar" id="barComm"></div></div>
+                        </div>
+                        <span class="sub-val" id="valComm">—</span>
+                    </div>
+                    <div class="sub-row">
+                        <span class="sub-icon">❤️</span>
+                        <div class="sub-info">
+                            <span class="sub-label">Empathy</span>
+                            <div class="sub-track"><div class="sub-bar" id="barEmp"></div></div>
+                        </div>
+                        <span class="sub-val" id="valEmp">—</span>
+                    </div>
+                    <div class="sub-row">
+                        <span class="sub-icon">💡</span>
+                        <div class="sub-info">
+                            <span class="sub-label">Helpfulness</span>
+                            <div class="sub-track"><div class="sub-bar" id="barHelp"></div></div>
+                        </div>
+                        <span class="sub-val" id="valHelp">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reviews-card">
+                <div class="reviews-card-head">
+                    <i class="fas fa-comments"></i> Patient Reviews
+                </div>
+                <div id="reviewsList">
+                    <div class="rv-loading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading reviews…
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ══ END RATING SECTION ══ -->
+
+        <!-- Live Banner -->
+        <div class="alert-banner" id="alertBanner">
+            <i class="fas fa-broadcast-tower"></i>
+            <span id="alertMessage"><strong>Live:</strong> Fetching updates...</span>
+            <span class="time">just now</span>
+        </div>
+
+        <!-- Search + Filter -->
+        <div class="filter-row">
+            <div class="search-section">
+                <input type="text" id="searchInput" placeholder="Search by patient name...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="month-select">
+                <select id="monthSelect">
+                    <option value="all">All Months</option>
+                    <option value="2026-01">January 2026</option>
+                    <option value="2026-02">February 2026</option>
+                    <option value="2026-03">March 2026</option>
+                    <option value="2026-04">April 2026</option>
+                    <option value="2026-05">May 2026</option>
+                    <option value="2026-06">June 2026</option>
+                    <option value="2026-07">July 2026</option>
+                    <option value="2026-08">August 2026</option>
+                    <option value="2026-09">September 2026</option>
+                    <option value="2026-10">October 2026</option>
+                    <option value="2026-11">November 2026</option>
+                    <option value="2026-12">December 2026</option>
+                </select>
+            </div>
+            <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display:none;"></div>
+
+        <!-- Appointments Table -->
+        <div class="section-title">
+            <i class="fas fa-list"></i> <span id="tableTitle">My Appointments</span>
+        </div>
+        <div class="appointments-table">
+            <table>
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Patient Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Prescription</th>
+                        <th>Actions</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentsBody">
+                    <tr><td colspan="8" style="text-align:center;padding:30px;">Loading appointments...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="dashboard-footer">
+            <div class="footer-left"><i class="fas fa-sun"></i> Stay healthy!</div>
+            <div class="footer-right"><span id="footerDate"></span></div>
+        </div>
+    </div>
+
+    <!-- Appointment Details Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeModalBtn">&times;</span>
+            <h2><i class="fas fa-calendar-alt" style="color:#1f4e8c;"></i> Appointment Details</h2>
+            <div id="modalDetails"></div>
+            <div class="modal-footer"><button class="btn" id="closeBtn">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-modal-content">
+            <i class="fas fa-sign-out-alt"></i>
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to logout?</p>
+            <div class="logout-modal-actions">
+                <button class="btn-cancel-logout" id="cancelLogoutBtn">Cancel</button>
+                <button class="btn-confirm-logout" id="confirmLogoutBtn">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="counsellor-dashboard.js"></script>
+</body>
+</html>

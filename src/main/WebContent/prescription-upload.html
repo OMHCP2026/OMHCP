@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Prescription - MindCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+        .container { max-width: 750px; margin: 40px auto; padding: 0 20px; }
+
+        .header { background: linear-gradient(135deg, #1f4e8c, #2563eb); color: white; border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        .back-btn  { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card h3 { font-size: 15px; font-weight: 600; color: #374151; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f3f4f6; }
+        .card h3 i { margin-right: 8px; color: #2563eb; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1.5px solid #e5e7eb;
+            border-radius: 8px; font-size: 14px; color: #1f2937;
+            transition: border-color 0.2s; outline: none; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2563eb; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* Patient search */
+        .patient-search { position: relative; }
+        .patient-results {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1.5px solid #e5e7eb; border-top: none;
+            border-radius: 0 0 8px 8px; z-index: 100; max-height: 200px; overflow-y: auto;
+        }
+        .patient-result-item { padding: 10px 14px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
+        .patient-result-item:hover { background: #eff6ff; }
+
+        /* File upload */
+        .file-upload-area {
+            border: 2px dashed #d1d5db; border-radius: 10px; padding: 32px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .file-upload-area:hover, .file-upload-area.dragover { border-color: #2563eb; background: #eff6ff; }
+        .file-upload-area i { font-size: 36px; color: #9ca3af; margin-bottom: 10px; display: block; }
+        .file-upload-area p { font-size: 14px; color: #6b7280; }
+        .file-upload-area span { font-size: 12px; color: #9ca3af; }
+        .file-name-display { margin-top: 10px; font-size: 13px; color: #2563eb; font-weight: 500; }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #1f4e8c, #2563eb);
+            color: white; border: none; border-radius: 10px; font-size: 15px;
+            font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-submit:hover    { opacity: 0.9; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Toast */
+        .toast { position: fixed; top: 24px; right: 24px; padding: 14px 20px; border-radius: 10px; color: white; font-size: 14px; font-weight: 500; z-index: 9999; display: none; align-items: center; gap: 10px; }
+        .toast.success { background: #059669; display: flex; }
+        .toast.error   { background: #dc2626; display: flex; }
+
+        .required { color: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="fas fa-check-circle" id="toastIcon"></i><span id="toastMsg"></span></div>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1><i class="fas fa-file-medical"></i> Upload Prescription</h1>
+            <p>Send prescription to your patient</p>
+        </div>
+        <a href="counsellor-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    </div>
+
+    <form id="prescriptionForm" enctype="multipart/form-data">
+
+        <!-- Patient Selection -->
+        <div class="card">
+            <h3><i class="fas fa-user"></i> Patient Details</h3>
+            <div class="form-group patient-search">
+                <label>Search Patient <span class="required">*</span></label>
+                <input type="text" id="patientSearch" placeholder="Type patient name..." autocomplete="off">
+                <div class="patient-results" id="patientResults" style="display:none;"></div>
+            </div>
+            <input type="hidden" id="patientId" name="patientId">
+            <div class="form-group">
+                <label>Selected Patient</label>
+                <input type="text" id="selectedPatient" readonly placeholder="No patient selected" style="background:#f9fafb;">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Appointment (Optional)</label>
+                    <select id="appointmentId" name="appointmentId">
+                        <option value="0">-- Select Appointment --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prescribed Date <span class="required">*</span></label>
+                    <input type="date" id="prescribedDate" name="prescribedDate">
+                </div>
+            </div>
+        </div>
+
+        <!-- Medicine Details -->
+        <div class="card">
+            <h3><i class="fas fa-pills"></i> Medicine Details</h3>
+            <div class="form-group">
+                <label>Medication Name <span class="required">*</span></label>
+                <input type="text" id="medication" name="medication" placeholder="e.g. Paracetamol 500mg">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dosage <span class="required">*</span></label>
+                    <input type="text" name="dosage" placeholder="e.g. 1 tablet">
+                </div>
+                <div class="form-group">
+                    <label>Frequency</label>
+                    <select name="frequency">
+                        <option value="">-- Select --</option>
+                        <option value="Once daily">Once daily</option>
+                        <option value="Twice daily">Twice daily</option>
+                        <option value="Three times daily">Three times daily</option>
+                        <option value="Four times daily">Four times daily</option>
+                        <option value="As needed">As needed</option>
+                        <option value="At bedtime">At bedtime</option>
+                        <option value="Before food">Before food</option>
+                        <option value="After food">After food</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Duration</label>
+                    <input type="text" name="duration" placeholder="e.g. 7 days">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Instructions / Notes</label>
+                <textarea name="instructions" placeholder="Special instructions for the patient..."></textarea>
+            </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="card">
+            <h3><i class="fas fa-paperclip"></i> Attach File (Optional)</h3>
+            <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('prescriptionFile').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload or drag & drop</p>
+                <span>PDF, JPG, PNG — Max 10MB</span>
+                <div class="file-name-display" id="fileNameDisplay"></div>
+            </div>
+            <input type="file" id="prescriptionFile" name="prescriptionFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;">
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-submit" id="submitBtn">
+            <i class="fas fa-paper-plane"></i> Send Prescription to Patient
+        </button>
+
+    </form>
+</div>
+
+<script src="prescription-upload.js"></script>
+</body>
+</html>

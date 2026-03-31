@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Call · Counsel+</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2f4a;
+    --accent: #2563eb;
+    --accent2: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --rec: #ef4444;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+  .topbar-left { display:flex; align-items:center; gap:12px; }
+  .logo { font-size:18px; font-weight:800; color:var(--text); }
+  .logo span { color:#7bb3ff; }
+  .call-info { display:flex; flex-direction:column; }
+  .call-info .patient-name { font-size:14px; font-weight:700; color:var(--text); }
+  .call-info .appt-id { font-size:11px; color:var(--muted); }
+  .topbar-right { display:flex; align-items:center; gap:14px; }
+
+  .status-pill {
+    display:flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:700;
+    background: #1e293b; color: var(--muted);
+    border: 1px solid var(--border);
+    transition: all .3s;
+  }
+  .status-pill.connecting { color:#f59e0b; border-color:#f59e0b33; background:#1c1500; }
+  .status-pill.connected  { color:var(--green); border-color:#22c55e33; background:#001a0d; }
+  .status-pill .dot { width:8px; height:8px; border-radius:50%; background:currentColor; }
+
+  .timer { font-size:13px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+
+  .rec-badge {
+    display:none; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:800;
+    background:#300; color:var(--rec);
+    border: 1px solid #ef444433;
+    animation: recPulse 1.5s infinite;
+  }
+  .rec-badge.active { display:flex; }
+  @keyframes recPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .rec-dot { width:8px; height:8px; border-radius:50%; background:var(--rec); }
+
+  /* ── VIDEO AREA ── */
+  .video-area {
+    flex: 1;
+    position: relative;
+    background: #060b14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #remoteVideo {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    background: #060b14;
+    display: block;
+  }
+
+  .waiting-overlay {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:16px;
+    background: radial-gradient(ellipse at center, #111827 0%, #060b14 100%);
+    z-index:2;
+    transition: opacity .5s;
+  }
+  .waiting-overlay.hidden { opacity:0; pointer-events:none; }
+  .avatar-ring {
+    width:100px; height:100px; border-radius:50%;
+    background: linear-gradient(135deg, #1f4e8c, #2563eb);
+    display:flex; align-items:center; justify-content:center;
+    font-size:36px; font-weight:800; color:#fff;
+    box-shadow: 0 0 0 12px #2563eb22, 0 0 0 24px #2563eb11;
+    animation: ring 2s infinite;
+  }
+  @keyframes ring { 0%,100%{box-shadow:0 0 0 12px #2563eb22,0 0 0 24px #2563eb11} 50%{box-shadow:0 0 0 18px #2563eb33,0 0 0 36px #2563eb0a} }
+  .waiting-text { font-size:16px; font-weight:600; color:var(--muted); }
+  .waiting-dots::after { content:'...'; animation:dots 1.4s infinite; }
+  @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+
+  .local-pip {
+    position:absolute;
+    bottom:100px; right:24px;
+    width:200px; height:130px;
+    border-radius:12px;
+    overflow:hidden;
+    border:2px solid var(--border);
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+    cursor:move;
+    z-index:5;
+    transition: border-color .2s;
+  }
+  .local-pip:hover { border-color: var(--accent2); }
+  #localVideo {
+    width:100%; height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+    background:#0a0f1e;
+    display:block;
+  }
+  .pip-label {
+    position:absolute; bottom:6px; left:8px;
+    font-size:10px; font-weight:700; color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.8);
+  }
+  .pip-off {
+    position:absolute; inset:0;
+    background:#111827;
+    display:none;
+    align-items:center; justify-content:center;
+    color:var(--muted); font-size:28px;
+  }
+  .pip-off.show { display:flex; }
+
+  /* ── CONTROLS BAR ── */
+  .controls {
+    display:flex; align-items:center; justify-content:center;
+    gap:14px;
+    padding:18px 24px;
+    background: var(--surface);
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+    position:relative;
+  }
+
+  .ctrl-btn {
+    width:52px; height:52px; border-radius:50%;
+    border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+    transition:all .2s;
+    position:relative;
+  }
+  .ctrl-btn:hover { transform:translateY(-2px); }
+  .ctrl-btn:active { transform:scale(.93); }
+
+  .ctrl-btn.default {
+    background: var(--surface2);
+    color: var(--text);
+    border:1px solid var(--border);
+  }
+  .ctrl-btn.default:hover { background:#243050; border-color:var(--accent2); }
+
+  .ctrl-btn.active-off {
+    background:#1e0707;
+    color:var(--red);
+    border:1px solid #ef444433;
+  }
+
+  .ctrl-btn.end-call {
+    background:var(--red); color:#fff;
+    border:none;
+    width:60px; height:60px; font-size:20px;
+    box-shadow:0 4px 20px #ef444455;
+  }
+  .ctrl-btn.end-call:hover { background:#dc2626; }
+
+  .btn-label {
+    position:absolute; bottom:-22px; left:50%;
+    transform:translateX(-50%);
+    font-size:10px; color:var(--muted);
+    white-space:nowrap; font-weight:600;
+    pointer-events:none;
+  }
+
+  .controls-right {
+    position:absolute; right:24px;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .toast-container {
+    position:fixed; bottom:110px; left:50%;
+    transform:translateX(-50%);
+    z-index:999;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    pointer-events:none;
+  }
+  .toast {
+    background:#1e2d40; border:1px solid var(--border);
+    color:var(--text); padding:9px 18px; border-radius:20px;
+    font-size:13px; font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);
+    animation:toastIn .25s ease;
+  }
+  @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  .network-indicator {
+    display:flex; align-items:flex-end; gap:2px; height:16px;
+  }
+  .net-bar { width:4px; border-radius:2px; background:var(--border); transition:background .3s; }
+  .net-bar:nth-child(1){height:5px}
+  .net-bar:nth-child(2){height:9px}
+  .net-bar:nth-child(3){height:13px}
+  .net-bar:nth-child(4){height:16px}
+  .net-bar.active { background:var(--green); }
+  .net-bar.warn   { background:#f59e0b; }
+  .net-bar.poor   { background:var(--red); }
+
+  /* ── PERMISSION ERROR (IMPROVED) ── */
+  .perm-error {
+    display:none; position:absolute; inset:0;
+    background:#0a0f1e;
+    align-items:center; justify-content:center;
+    flex-direction:column; gap:16px; z-index:20;
+    text-align:center; padding:40px;
+  }
+  .perm-error.show { display:flex; }
+  .perm-error i { font-size:52px; color:var(--red); }
+  .perm-error h2 { font-size:20px; color:var(--text); }
+  .perm-error p  { color:var(--muted); max-width:420px; line-height:1.6; }
+  .perm-error .error-detail {
+    background:#1a0a0a; border:1px solid #ef444433;
+    border-radius:8px; padding:10px 18px;
+    font-size:12px; color:#f87171; font-family:monospace;
+    max-width:420px; word-break:break-all;
+  }
+  .perm-error .btn-row { display:flex; gap:12px; margin-top:8px; }
+  .perm-error button {
+    padding:11px 24px;
+    background:var(--accent); color:#fff;
+    border:none; border-radius:8px;
+    font-size:14px; font-weight:700; cursor:pointer;
+    transition: background .2s;
+  }
+  .perm-error button:hover { background:#1d4ed8; }
+  .perm-error .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .perm-error .btn-secondary:hover { background:#243050; }
+
+  /* Steps guide */
+  .perm-steps {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius:10px; padding:16px 20px;
+    text-align:left; max-width:420px;
+    font-size:13px; line-height:2;
+    color: var(--muted);
+  }
+  .perm-steps b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">Counsel<span>+</span></div>
+    <div style="width:1px;height:28px;background:var(--border);"></div>
+    <div class="call-info">
+      <div class="patient-name" id="counsellorNameDisplay">Counsellor</div>
+      <div class="appt-id" id="apptIdDisplay">Appointment #—</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="network-indicator" id="networkIndicator">
+      <div class="net-bar" id="nb1"></div>
+      <div class="net-bar" id="nb2"></div>
+      <div class="net-bar" id="nb3"></div>
+      <div class="net-bar" id="nb4"></div>
+    </div>
+    <div class="status-pill connecting" id="statusPill">
+      <div class="dot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+    <div class="rec-badge" id="recBadge">
+      <div class="rec-dot"></div> REC
+    </div>
+    <div class="timer" id="callTimer">00:00</div>
+  </div>
+</div>
+
+<!-- ── VIDEO AREA ── -->
+<div class="video-area" id="videoArea">
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <div class="waiting-overlay" id="waitingOverlay">
+    <div class="avatar-ring" id="counsellorAvatar">C</div>
+    <div class="waiting-text">Connecting to counsellor<span class="waiting-dots"></span></div>
+  </div>
+
+  <div class="local-pip" id="localPip">
+    <video id="localVideo" autoplay playsinline muted></video>
+    <div class="pip-off" id="pipOff"><i class="fas fa-video-slash"></i></div>
+    <div class="pip-label">You</div>
+  </div>
+
+  <!-- ── IMPROVED PERMISSION ERROR ── -->
+  <div class="perm-error" id="permError">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>Camera / Microphone Access Denied</h2>
+    <p id="permErrorMsg">Please allow camera and microphone access in your browser settings, then retry.</p>
+    <div class="error-detail" id="errorDetail" style="display:none;"></div>
+
+    <div class="perm-steps" id="permSteps">
+      <b>How to fix:</b><br>
+      1. Click the 🔒 <b>lock icon</b> in the address bar<br>
+      2. Set <b>Camera</b> → Allow<br>
+      3. Set <b>Microphone</b> → Allow<br>
+      4. Click <b>Retry</b> below
+    </div>
+
+    <div class="btn-row">
+      <button onclick="retryCamera()"><i class="fas fa-redo"></i> Retry</button>
+      <button class="btn-secondary" onclick="tryAudioOnly()"><i class="fas fa-microphone"></i> Audio Only</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+</div>
+
+<!-- ── CONTROLS ── -->
+<div class="controls">
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn default" id="btnMic">
+      <i class="fas fa-microphone" id="micIcon"></i>
+    </button>
+    <span class="btn-label">Mute</span>
+  </div>
+
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn default" id="btnVideo">
+      <i class="fas fa-video" id="videoIcon"></i>
+    </button>
+    <span class="btn-label">Camera</span>
+  </div>
+
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <button class="ctrl-btn end-call" id="btnEnd">
+      <i class="fas fa-phone-slash"></i>
+    </button>
+    <span class="btn-label" style="color:var(--red)">End</span>
+  </div>
+
+  <div class="controls-right">
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+      <button class="ctrl-btn default" id="btnFullscreen">
+        <i class="fas fa-expand" id="fsIcon"></i>
+      </button>
+      <span class="btn-label">Fullscreen</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== PARAMS ====================
+const params         = new URLSearchParams(location.search);
+const appointmentId  = params.get('appointmentId') || '0';
+const counsellorName = params.get('counsellorName') || 'Counsellor';
+const callId         = params.get('callId') || '';
+const contextPath    = window.location.pathname.split('/')[1]; // "OMHCP"
+
+document.getElementById('counsellorNameDisplay').textContent = counsellorName;
+document.getElementById('apptIdDisplay').textContent = 'Appointment #' + appointmentId;
+const avatar = counsellorName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+document.getElementById('counsellorAvatar').textContent = avatar || 'C';
+
+// ==================== STATE ====================
+let localStream    = null;
+let peerConnection = null;
+let isConnected    = false;
+let micOn = true, camOn = true;
+let callSeconds    = 0;
+let timerInterval  = null;
+let pollInterval   = null;
+let lastSignalTime = 0;
+
+const ICE_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ]
+};
+
+// ==================== INIT ====================
+async function init() {
+  console.log('🚀 init() called, callId:', callId);
+
+  // Check if mediaDevices is supported
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showPermError(
+      'Your browser does not support camera access. Please use Chrome or Edge.',
+      'MediaDevices API not supported'
+    );
+    return;
+  }
+
+  await requestCameraAccess();
+}
+
+// ==================== CAMERA ACCESS (with detailed errors) ====================
+async function requestCameraAccess() {
+  console.log('📷 Requesting camera + mic access...');
+  hidePermError();
+
+  try {
+    // Try video + audio first
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    console.log('✅ Camera + mic granted');
+    onMediaReady();
+
+  } catch (err) {
+    console.error('❌ getUserMedia error:', err.name, err.message);
+    handleMediaError(err, 'video+audio');
+  }
+}
+
+async function tryAudioOnly() {
+  console.log('🎤 Trying audio only...');
+  hidePermError();
+  toast('Trying audio only mode...');
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    console.log('✅ Audio only granted');
+    camOn = false;
+    document.getElementById('videoIcon').className = 'fas fa-video-slash';
+    document.getElementById('btnVideo').className  = 'ctrl-btn active-off';
+    document.getElementById('pipOff').classList.add('show');
+    onMediaReady();
+
+  } catch (err) {
+    console.error('❌ Audio only error:', err.name, err.message);
+    handleMediaError(err, 'audio-only');
+  }
+}
+
+function handleMediaError(err, mode) {
+  let userMsg = '';
+  let detail  = err.name + ': ' + err.message;
+
+  switch (err.name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      userMsg = 'Camera/microphone permission was denied. Click the 🔒 lock icon in the address bar → Allow camera & microphone → Retry.';
+      break;
+
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      userMsg = 'No camera or microphone found on this device. Please connect a webcam and retry.';
+      break;
+
+    case 'NotReadableError':
+    case 'TrackStartError':
+      userMsg = 'Camera is already being used by another app (Zoom, Teams, OBS, etc.). Close those apps and retry.';
+      break;
+
+    case 'OverconstrainedError':
+    case 'ConstraintNotSatisfiedError':
+      userMsg = 'Camera does not support the required settings. Retrying with basic settings...';
+      // Auto retry with minimal constraints
+      setTimeout(() => retryWithMinimalConstraints(), 1000);
+      break;
+
+    case 'NotSupportedError':
+      userMsg = 'Camera access is not supported on this browser. Please use Chrome or Edge.';
+      break;
+
+    case 'AbortError':
+      userMsg = 'Camera access was aborted. Please try again.';
+      break;
+
+    default:
+      userMsg = 'Could not access camera/microphone. Please check your browser permissions and try again.';
+  }
+
+  showPermError(userMsg, detail);
+}
+
+async function retryWithMinimalConstraints() {
+  console.log('🔄 Retrying with minimal constraints...');
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    hidePermError();
+    onMediaReady();
+  } catch (err) {
+    showPermError('Still unable to access camera: ' + err.message, err.name);
+  }
+}
+
+function retryCamera() {
+  requestCameraAccess();
+}
+
+// ==================== MEDIA READY ====================
+async function onMediaReady() {
+  document.getElementById('localVideo').srcObject = localStream;
+  console.log('🎥 Local stream set, tracks:', localStream.getTracks().map(t => t.kind));
+
+  // Accept the call on server
+  if (callId) {
+    try {
+      await fetch('/' + contextPath + '/CallServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `action=acceptCall&callId=${encodeURIComponent(callId)}`
+      });
+      console.log('✅ Call accepted on server');
+    } catch (e) {
+      console.warn('Could not notify server of accept:', e);
+    }
+  }
+
+  await createPeerConnection();
+  startSignalPolling();
+  toast('📞 Joining call…');
+}
+
+// ==================== PEER CONNECTION ====================
+async function createPeerConnection() {
+  console.log('🔗 Creating peer connection...');
+  peerConnection = new RTCPeerConnection(ICE_CONFIG);
+
+  localStream.getTracks().forEach(track => {
+    peerConnection.addTrack(track, localStream);
+    console.log('➕ Added track:', track.kind);
+  });
+
+  peerConnection.ontrack = e => {
+    console.log('📡 Remote track received:', e.track.kind);
+    const rv = document.getElementById('remoteVideo');
+    if (!rv.srcObject) rv.srcObject = new MediaStream();
+    rv.srcObject.addTrack(e.track);
+    onConnected();
+  };
+
+  peerConnection.onicecandidate = e => {
+    if (e.candidate) {
+      console.log('🧊 ICE candidate:', e.candidate.type);
+      sendSignal('ice', JSON.stringify(e.candidate));
+    }
+  };
+
+  peerConnection.oniceconnectionstatechange = () => {
+    console.log('🔌 ICE state:', peerConnection.iceConnectionState);
+  };
+
+  peerConnection.onconnectionstatechange = () => {
+    const s = peerConnection.connectionState;
+    console.log('🔌 Connection state:', s);
+    if (s === 'connected')                       onConnected();
+    if (s === 'disconnected' || s === 'failed')  onDisconnected();
+  };
+
+  setInterval(checkNetworkQuality, 3000);
+}
+
+// ==================== SIGNALING ====================
+function startSignalPolling() {
+  if (!callId) {
+    console.warn('⚠️ No callId — signal polling skipped');
+    toast('⚠️ No call ID. Ask counsellor to re-initiate the call.');
+    return;
+  }
+  console.log('📡 Starting signal polling for callId:', callId);
+  pollInterval = setInterval(pollSignals, 1500);
+}
+
+async function pollSignals() {
+  if (!callId) return;
+  try {
+    const res  = await fetch(`/${contextPath}/CallServlet?action=getSignal&callId=${encodeURIComponent(callId)}&since=${lastSignalTime}`);
+    const data = await res.json();
+    if (!data.success) return;
+    if (data.callStatus === 'ended' || data.callStatus === 'rejected') {
+      onDisconnected();
+      return;
+    }
+    for (const sig of (data.signals || [])) {
+      lastSignalTime = Math.max(lastSignalTime, sig.timestamp);
+      await handleSignal(sig);
+    }
+  } catch (e) {
+    // Silent — network blip
+  }
+}
+
+async function handleSignal(sig) {
+  console.log('📨 Signal received:', sig.type);
+  switch (sig.type) {
+    case 'offer': {
+      if (!peerConnection) await createPeerConnection();
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.data)));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      await sendSignal('answer', JSON.stringify(answer));
+      console.log('📤 Answer sent');
+      break;
+    }
+    case 'answer': {
+      if (peerConnection && peerConnection.signalingState === 'have-local-offer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.data)));
+      }
+      break;
+    }
+    case 'ice': {
+      if (peerConnection && peerConnection.remoteDescription) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(sig.data)));
+        } catch (e) {
+          console.warn('ICE add error:', e);
+        }
+      }
+      break;
+    }
+    case 'ended':
+      onDisconnected();
+      break;
+  }
+}
+
+async function sendSignal(type, data) {
+  if (!callId) return;
+  try {
+    await fetch('/' + contextPath + '/CallServlet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `action=sendSignal&callId=${encodeURIComponent(callId)}&type=${type}&data=${encodeURIComponent(data)}`
+    });
+  } catch (e) {}
+}
+
+// ==================== CALL STATE ====================
+function onConnected() {
+  if (isConnected) return;
+  isConnected = true;
+  document.getElementById('waitingOverlay').classList.add('hidden');
+  setStatus('connected');
+  startTimer();
+  toast('✅ Connected!');
+  console.log('✅ Call connected!');
+}
+
+function onDisconnected() {
+  console.log('📴 Call disconnected');
+  clearInterval(pollInterval);
+  clearInterval(timerInterval);
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  toast('📴 Call ended');
+  setTimeout(() => {
+    try { window.close(); } catch(e) {}
+    window.location.href = 'patient-dashboard.html';
+  }, 2000);
+}
+
+// ==================== CONTROLS ====================
+document.getElementById('btnMic').addEventListener('click', () => {
+  if (!localStream) return;
+  micOn = !micOn;
+  localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+  document.getElementById('micIcon').className = micOn ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+  document.getElementById('btnMic').className  = micOn ? 'ctrl-btn default'  : 'ctrl-btn active-off';
+  toast(micOn ? '🎤 Mic on' : '🔇 Muted');
+});
+
+document.getElementById('btnVideo').addEventListener('click', () => {
+  if (!localStream) return;
+  camOn = !camOn;
+  localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+  document.getElementById('videoIcon').className = camOn ? 'fas fa-video' : 'fas fa-video-slash';
+  document.getElementById('btnVideo').className  = camOn ? 'ctrl-btn default' : 'ctrl-btn active-off';
+  document.getElementById('pipOff').classList.toggle('show', !camOn);
+  toast(camOn ? '📹 Camera on' : '📷 Camera off');
+});
+
+document.getElementById('btnEnd').addEventListener('click', async () => {
+  if (callId) {
+    await fetch('/' + contextPath + '/CallServlet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `action=endCall&callId=${encodeURIComponent(callId)}`
+    }).catch(() => {});
+  }
+  onDisconnected();
+});
+
+document.getElementById('btnFullscreen').addEventListener('click', () => {
+  const area = document.getElementById('videoArea');
+  if (!document.fullscreenElement) {
+    area.requestFullscreen().catch(() => {});
+    document.getElementById('fsIcon').className = 'fas fa-compress';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('fsIcon').className = 'fas fa-expand';
+  }
+});
+
+// ==================== HELPERS ====================
+function startTimer() {
+  timerInterval = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+    const s = String(callSeconds % 60).padStart(2, '0');
+    document.getElementById('callTimer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+function setStatus(state) {
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusText');
+  pill.className = 'status-pill ' + state;
+  txt.textContent = state === 'connected' ? 'Connected' : 'Connecting…';
+}
+
+function toast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+function showPermError(msg, detail) {
+  document.getElementById('permErrorMsg').textContent = msg;
+  const detailEl = document.getElementById('errorDetail');
+  if (detail) {
+    detailEl.textContent = detail;
+    detailEl.style.display = 'block';
+  }
+  document.getElementById('permError').classList.add('show');
+}
+
+function hidePermError() {
+  document.getElementById('permError').classList.remove('show');
+}
+
+async function checkNetworkQuality() {
+  if (!peerConnection) return;
+  try {
+    const stats = await peerConnection.getStats();
+    let rtt = null;
+    stats.forEach(report => {
+      if (report.type === 'candidate-pair' && report.state === 'succeeded')
+        rtt = report.currentRoundTripTime;
+    });
+    const bars = ['nb1','nb2','nb3','nb4'].map(id => document.getElementById(id));
+    bars.forEach(b => b.className = 'net-bar');
+    if (rtt === null) return;
+    let level = rtt < 0.05 ? 4 : rtt < 0.15 ? 3 : rtt < 0.3 ? 2 : 1;
+    const cls  = level >= 3 ? 'active' : level === 2 ? 'warn' : 'poor';
+    for (let i = 0; i < level; i++) bars[i].classList.add(cls);
+  } catch (e) {}
+}
+
+// ── Draggable PiP ──
+(function() {
+  const pip = document.getElementById('localPip');
+  let dragging = false, ox = 0, oy = 0;
+  pip.addEventListener('mousedown', e => {
+    dragging = true;
+    ox = e.clientX - pip.offsetLeft;
+    oy = e.clientY - pip.offsetTop;
+    pip.style.cursor = 'grabbing';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const area = document.getElementById('videoArea').getBoundingClientRect();
+    let x = Math.max(8, Math.min(e.clientX - ox, area.width  - pip.offsetWidth  - 8));
+    let y = Math.max(8, Math.min(e.clientY - oy, area.height - pip.offsetHeight - 8));
+    pip.style.right  = 'auto';
+    pip.style.bottom = 'auto';
+    pip.style.left   = x + 'px';
+    pip.style.top    = y + 'px';
+  });
+  document.addEventListener('mouseup', () => { dragging = false; pip.style.cursor = 'move'; });
+})();
+
+// ── Start ──
+init();
+</script>
+</body>
+</html>
